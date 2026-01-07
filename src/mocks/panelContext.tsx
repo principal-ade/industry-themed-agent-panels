@@ -42,9 +42,8 @@ const createMockSlice = <T,>(
 /**
  * Mock Panel Context for Storybook
  */
-export const createMockContext = (
-  overrides?: Partial<PanelContextValue>
-): PanelContextValue => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const createMockContext = (overrides?: any): any => {
   // Create mock data slices
   const mockSlices = new Map<string, DataSlice>([
     ['git', createMockSlice('git', mockGitStatusData)],
@@ -156,7 +155,44 @@ export const createMockContext = (
     },
   };
 
-  return { ...defaultContext, ...overrides };
+  const merged = { ...defaultContext, ...overrides };
+
+  // If slices were overridden, update all slice-related methods to use the new slices
+  if (overrides?.slices) {
+    const overriddenSlices = overrides.slices;
+    merged.getSlice = <T,>(name: string): DataSlice<T> | undefined => {
+      return overriddenSlices.get(name) as DataSlice<T> | undefined;
+    };
+    merged.getWorkspaceSlice = <T,>(name: string): DataSlice<T> | undefined => {
+      const slice = overriddenSlices.get(name);
+      return slice?.scope === 'workspace'
+        ? (slice as DataSlice<T>)
+        : undefined;
+    };
+    merged.getRepositorySlice = <T,>(name: string): DataSlice<T> | undefined => {
+      const slice = overriddenSlices.get(name);
+      return slice?.scope === 'repository'
+        ? (slice as DataSlice<T>)
+        : undefined;
+    };
+    merged.hasSlice = (name: string, scope?: 'workspace' | 'repository'): boolean => {
+      const slice = overriddenSlices.get(name);
+      if (!slice) return false;
+      if (!scope) return true;
+      return slice.scope === scope;
+    };
+    merged.isSliceLoading = (
+      name: string,
+      scope?: 'workspace' | 'repository'
+    ): boolean => {
+      const slice = overriddenSlices.get(name);
+      if (!slice) return false;
+      if (scope && slice.scope !== scope) return false;
+      return slice.loading;
+    };
+  }
+
+  return merged;
 };
 
 /**
@@ -235,10 +271,17 @@ export const createMockEvents = (): PanelEventEmitter => {
  */
 export const MockPanelProvider: React.FC<{
   children: (props: PanelComponentProps) => React.ReactNode;
-  contextOverrides?: Partial<PanelContextValue>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  contextOverrides?: any;
   actionsOverrides?: Partial<PanelActions>;
 }> = ({ children, contextOverrides, actionsOverrides }) => {
+  // eslint-disable-next-line no-console
+  console.log('[MockPanelProvider] contextOverrides:', contextOverrides);
   const context = createMockContext(contextOverrides);
+  // eslint-disable-next-line no-console
+  console.log('[MockPanelProvider] created context:', context);
+  // eslint-disable-next-line no-console
+  console.log('[MockPanelProvider] context.adapters:', (context as any).adapters);
   const actions = createMockActions(actionsOverrides);
   const events = createMockEvents();
 

@@ -1,0 +1,319 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React from 'react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { PathsFileTreeBuilder } from '@principal-ai/repository-abstraction';
+import { ThemeProvider } from '@principal-ade/industry-theme';
+import { SkillsListPanel } from './SkillsListPanel';
+import { SkillDetailPanel } from './SkillDetailPanel';
+import {
+  createMockContext,
+  createMockActions,
+  createMockEvents,
+} from '../mocks/panelContext';
+import type { DataSlice } from '../types';
+
+/**
+ * Skills Lifecycle demonstrates the complete workflow of browsing and viewing skills.
+ * Click a skill in the list panel to see its details in the detail panel.
+ */
+const meta = {
+  title: 'Workflows/Skills Lifecycle',
+  parameters: {
+    layout: 'fullscreen',
+    docs: {
+      description: {
+        component:
+          'Interactive demonstration of the skills workflow. Select a skill from the list panel on the left to view its details on the right.',
+      },
+    },
+  },
+  tags: ['autodocs'],
+} satisfies Meta;
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+// Mock SKILL.md content
+const createSkillContent = (
+  title: string,
+  description: string,
+  capabilities: string[]
+) => `# ${title}
+
+${description}
+
+## Capabilities
+
+${capabilities.map((cap) => `- ${cap}`).join('\n')}
+
+## Usage
+
+This skill can be used by AI agents to ${description.toLowerCase()}.
+
+## Implementation Notes
+
+When using this skill, ensure that:
+- Input data is properly validated
+- Error handling is implemented
+- Results are formatted appropriately
+
+## Examples
+
+\`\`\`typescript
+// Example usage
+const result = await executeSkill({
+  input: data,
+  options: {}
+});
+\`\`\`
+
+## Dependencies
+
+- Core Agent Framework
+- Required APIs and services
+`;
+
+// Create comprehensive mock skills
+const createSkillsMocks = () => {
+  const builder = new PathsFileTreeBuilder();
+  const mockFileTreeWithSkills = builder.build({
+    files: [
+      '.skills/legal-review/SKILL.md',
+      '.skills/data-analysis/SKILL.md',
+      '.skills/presentation-maker/SKILL.md',
+      '.skills/code-reviewer/SKILL.md',
+      '.skills/sql-generator/SKILL.md',
+      '.skills/email-drafter/SKILL.md',
+      'src/index.ts',
+      'README.md',
+    ],
+    rootPath: '/Users/developer/my-project',
+  });
+
+  const skillContents: Record<string, string> = {
+    'legal-review/SKILL.md': createSkillContent(
+      'Legal Review',
+      'Review contracts and legal documents for potential issues and compliance',
+      [
+        'Identify contractual obligations and liabilities',
+        'Check for regulatory compliance',
+        'Flag ambiguous or problematic clauses',
+        'Suggest improvements to legal language',
+        'Compare against standard contract templates',
+      ]
+    ),
+    'data-analysis/SKILL.md': createSkillContent(
+      'Data Analysis',
+      'Analyze datasets to extract insights and generate visualizations',
+      [
+        'Statistical analysis and trend identification',
+        'Data cleaning and preprocessing',
+        'Generate charts and visualizations',
+        'Detect anomalies and outliers',
+        'Predictive modeling',
+      ]
+    ),
+    'presentation-maker/SKILL.md': createSkillContent(
+      'Presentation Maker',
+      'Create professional presentations from content and data',
+      [
+        'Design slide layouts and themes',
+        'Convert data into visual stories',
+        'Generate speaker notes',
+        'Create infographics and diagrams',
+        'Optimize for different audiences',
+      ]
+    ),
+    'code-reviewer/SKILL.md': createSkillContent(
+      'Code Reviewer',
+      'Review code for quality, security, and best practices',
+      [
+        'Identify potential bugs and security vulnerabilities',
+        'Suggest performance improvements',
+        'Check adherence to coding standards',
+        'Detect code smells and anti-patterns',
+        'Recommend refactoring opportunities',
+      ]
+    ),
+    'sql-generator/SKILL.md': createSkillContent(
+      'SQL Generator',
+      'Generate SQL queries from natural language descriptions',
+      [
+        'Parse natural language query descriptions',
+        'Generate optimized SQL queries',
+        'Support multiple database dialects',
+        'Validate query safety and permissions',
+        'Explain query logic',
+      ]
+    ),
+    'email-drafter/SKILL.md': createSkillContent(
+      'Email Drafter',
+      'Draft professional emails based on context and intent',
+      [
+        'Adapt tone for different audiences',
+        'Structure emails professionally',
+        'Suggest subject lines',
+        'Include appropriate greetings and signatures',
+        'Maintain brand voice',
+      ]
+    ),
+  };
+
+  const fileSystem = {
+    readFile: async (path: string) => {
+      const match = path.match(/\.skills\/([^/]+\/SKILL\.md)$/);
+      if (match && skillContents[match[1]]) {
+        return skillContents[match[1]];
+      }
+      throw new Error(`File not found: ${path}`);
+    },
+  };
+
+  const mockSlices = new Map<string, DataSlice>();
+  mockSlices.set('fileTree', {
+    scope: 'repository',
+    name: 'fileTree',
+    data: mockFileTreeWithSkills,
+    loading: false,
+    error: null,
+    refresh: async () => {},
+  });
+
+  const events = createMockEvents();
+
+  const context = createMockContext({
+    currentScope: {
+      type: 'repository',
+      workspace: {
+        name: 'my-workspace',
+        path: '/Users/developer/my-workspace',
+      },
+      repository: {
+        name: 'my-project',
+        path: '/Users/developer/my-project',
+      },
+    },
+    slices: mockSlices,
+    adapters: {
+      fileSystem,
+    },
+  });
+
+  const actions = createMockActions({
+    openFile: (filePath: string) => {
+      // eslint-disable-next-line no-console
+      console.log('[Skills Lifecycle] Opening file:', filePath);
+    },
+  });
+
+  return { context, actions, events };
+};
+
+/**
+ * Interactive workflow showing skill list and detail panels side by side.
+ * Click a skill in the list to see its details.
+ */
+export const SkillsBrowsing: Story = {
+  render: () => {
+    const mocks = createSkillsMocks();
+
+    return (
+      <ThemeProvider>
+        <div
+          style={{
+            height: '100vh',
+            display: 'grid',
+            gridTemplateColumns: '400px 1fr',
+            gap: 0,
+            background: '#f5f5f5',
+          }}
+        >
+          {/* Skills List Panel */}
+          <div
+            style={{
+              borderRight: '1px solid #e0e0e0',
+              overflow: 'hidden',
+            }}
+          >
+            <SkillsListPanel
+              context={mocks.context}
+              actions={mocks.actions}
+              events={mocks.events}
+            />
+          </div>
+
+          {/* Skill Detail Panel */}
+          <div style={{ overflow: 'hidden' }}>
+            <SkillDetailPanel
+              context={mocks.context}
+              actions={mocks.actions}
+              events={mocks.events}
+            />
+          </div>
+        </div>
+      </ThemeProvider>
+    );
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Click any skill in the list panel (left) to view its details in the detail panel (right). Try searching and filtering skills, then selecting them to see the full information.',
+      },
+    },
+  },
+};
+
+/**
+ * Vertical layout variant showing list above detail
+ */
+export const SkillsBrowsingVertical: Story = {
+  render: () => {
+    const mocks = createSkillsMocks();
+
+    return (
+      <ThemeProvider>
+        <div
+          style={{
+            height: '100vh',
+            display: 'grid',
+            gridTemplateRows: '300px 1fr',
+            gap: 0,
+            background: '#f5f5f5',
+          }}
+        >
+          {/* Skills List Panel */}
+          <div
+            style={{
+              borderBottom: '1px solid #e0e0e0',
+              overflow: 'hidden',
+            }}
+          >
+            <SkillsListPanel
+              context={mocks.context}
+              actions={mocks.actions}
+              events={mocks.events}
+            />
+          </div>
+
+          {/* Skill Detail Panel */}
+          <div style={{ overflow: 'hidden' }}>
+            <SkillDetailPanel
+              context={mocks.context}
+              actions={mocks.actions}
+              events={mocks.events}
+            />
+          </div>
+        </div>
+      </ThemeProvider>
+    );
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Vertical layout with list panel on top and detail panel below. Good for wide screens.',
+      },
+    },
+  },
+};

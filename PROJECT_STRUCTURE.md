@@ -8,7 +8,7 @@ This document explains the organization and purpose of files in this panel exten
 industry-themed-panel-starter/
 ├── src/                          # Source code
 │   ├── panels/                   # Panel components
-│   │   └── ExamplePanel.tsx      # Example panel implementation
+│   │   └── SkillsListPanel.tsx   # Panel implementations
 │   ├── types/                    # TypeScript definitions
 │   │   └── index.ts              # All type definitions
 │   └── index.tsx                 # Main entry - exports panels array
@@ -72,23 +72,19 @@ industry-themed-panel-starter/
 - Ensures type safety across the project
 - Documents the panel framework API
 
-#### `src/panels/ExamplePanel.tsx`
+#### `src/panels/*.tsx`
 
-**Purpose**: Example panel component implementation
-**Demonstrates**:
+**Purpose**: Panel component implementations
+**Includes**:
 
-- Using `PanelComponentProps`
-- Accessing context data
-- Calling host actions
-- Subscribing to events
-- Handling loading states
-- Error handling
+- SkillsListPanel - Displays agent skills from SKILL.md files
+- SkillDetailPanel - Shows detailed skill information
 
 **Key Points**:
 
-- Template for creating new panels
-- Shows best practices
-- Fully commented
+- Uses `PanelComponentProps` for type safety
+- Demonstrates best practices for panel development
+- Shows proper context usage and event handling
 
 ### Configuration Files
 

@@ -26,9 +26,9 @@ Change these fields to match your panel:
 }
 ```
 
-### Modify the Example Panel
+### Create Your Panel
 
-Edit `src/panels/ExamplePanel.tsx` or create a new panel:
+Create a new panel in `src/panels/`:
 
 ```tsx
 import React from 'react';

@@ -1,8 +1,6 @@
-import { ExamplePanel } from './panels/ExamplePanel';
 import { SkillsListPanel } from './panels/SkillsListPanel';
 import { SkillDetailPanel } from './panels/SkillDetailPanel';
 import type { PanelDefinition, PanelContextValue } from './types';
-import { examplePanelTools } from './tools';
 
 /**
  * Export array of panel definitions.
@@ -63,40 +61,6 @@ export const panels: PanelDefinition[] = [
       console.log('Skill Detail Panel unmounting');
     },
   },
-  {
-    metadata: {
-      id: 'your-org.example-panel',
-      name: 'Example Panel',
-      icon: '📝',
-      version: '0.1.0',
-      author: 'Your Organization',
-      description: 'A simple example panel demonstrating the panel framework',
-      slices: ['git', 'markdown', 'fileTree'], // Data slices this panel depends on
-      // UTCP-compatible tools this panel exposes
-      tools: examplePanelTools,
-    },
-    component: ExamplePanel,
-
-    // Optional: Called when this specific panel is mounted
-    onMount: async (context: PanelContextValue) => {
-      // eslint-disable-next-line no-console
-      console.log(
-        'Example Panel mounted',
-        context.currentScope.repository?.path
-      );
-
-      // Example: Refresh git data if available
-      if (context.hasSlice('git') && !context.isSliceLoading('git')) {
-        await context.refresh('repository', 'git');
-      }
-    },
-
-    // Optional: Called when this specific panel is unmounted
-    onUnmount: async (_context: PanelContextValue) => {
-      // eslint-disable-next-line no-console
-      console.log('Example Panel unmounting');
-    },
-  },
 ];
 
 /**
@@ -117,14 +81,3 @@ export const onPackageUnload = async () => {
   console.log('Panel package unloading - Agent Panels Extension');
 };
 
-/**
- * Export tools for server-safe imports.
- * Use '@your-org/panel-starter/tools' to import without React dependencies.
- */
-export {
-  examplePanelTools,
-  examplePanelToolsMetadata,
-  refreshGitStatusTool,
-  selectFileTool,
-  toggleSectionTool,
-} from './tools';

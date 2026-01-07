@@ -47,7 +47,7 @@ Update `package.json` with your information:
 
 ### 3. Develop Your Panel
 
-Edit `src/panels/ExamplePanel.tsx` or create new panel components:
+Create new panel components in `src/panels/`:
 
 ```tsx
 import React from 'react';
@@ -124,8 +124,8 @@ bun run lint
 panel-starter/
 ├── src/
 │   ├── panels/
-│   │   ├── ExamplePanel.tsx           # Your panel components
-│   │   └── ExamplePanel.stories.tsx   # Storybook stories
+│   │   ├── SkillsListPanel.tsx        # Panel components
+│   │   └── SkillsListPanel.stories.tsx   # Storybook stories
 │   ├── types/
 │   │   └── index.ts                   # TypeScript type definitions
 │   ├── mocks/

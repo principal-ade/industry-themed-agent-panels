@@ -67,9 +67,18 @@ const builder = new PathsFileTreeBuilder();
 const mockFileTreeWithSkills = builder.build({
   files: [
     '.skills/legal-review/SKILL.md',
+    '.skills/legal-review/references/contract-templates.md',
+    '.skills/legal-review/references/compliance-guide.md',
     '.skills/data-analysis/SKILL.md',
+    '.skills/data-analysis/scripts/analyze.py',
+    '.skills/data-analysis/scripts/visualize.py',
+    '.skills/data-analysis/assets/template.xlsx',
     '.skills/presentation-maker/SKILL.md',
+    '.skills/presentation-maker/scripts/generate-slides.js',
+    '.skills/presentation-maker/assets/theme-corporate.pptx',
+    '.skills/presentation-maker/assets/theme-modern.pptx',
     '.skills/code-reviewer/SKILL.md',
+    '.skills/code-reviewer/references/best-practices.md',
     'src/index.ts',
     'README.md',
   ],

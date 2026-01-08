@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTheme } from '@principal-ade/industry-theme';
-import { FileText, ChevronRight } from 'lucide-react';
+import { FileText, ChevronRight, Code, BookOpen, Package } from 'lucide-react';
 import type { Skill } from '../hooks/useSkillsData';
 
 interface SkillCardProps {
@@ -146,6 +146,72 @@ export const SkillCard: React.FC<SkillCardProps> = ({
               </span>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Structure indicators */}
+      {(skill.hasScripts || skill.hasReferences || skill.hasAssets) && (
+        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+          {skill.hasScripts && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '2px 8px',
+                borderRadius: theme.radii[1],
+                backgroundColor: `${theme.colors.primary}15`,
+                border: `1px solid ${theme.colors.primary}30`,
+                fontSize: theme.fontSizes[0],
+                color: theme.colors.primary,
+                fontWeight: 500,
+              }}
+              title={`Scripts: ${skill.scriptFiles?.join(', ')}`}
+            >
+              <Code size={12} />
+              <span>{skill.scriptFiles?.length || 0}</span>
+            </div>
+          )}
+          {skill.hasReferences && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '2px 8px',
+                borderRadius: theme.radii[1],
+                backgroundColor: `${theme.colors.secondary}15`,
+                border: `1px solid ${theme.colors.secondary}30`,
+                fontSize: theme.fontSizes[0],
+                color: theme.colors.secondary,
+                fontWeight: 500,
+              }}
+              title={`References: ${skill.referenceFiles?.join(', ')}`}
+            >
+              <BookOpen size={12} />
+              <span>{skill.referenceFiles?.length || 0}</span>
+            </div>
+          )}
+          {skill.hasAssets && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '2px 8px',
+                borderRadius: theme.radii[1],
+                backgroundColor: `${theme.colors.accent}15`,
+                border: `1px solid ${theme.colors.accent}30`,
+                fontSize: theme.fontSizes[0],
+                color: theme.colors.accent,
+                fontWeight: 500,
+              }}
+              title={`Assets: ${skill.assetFiles?.join(', ')}`}
+            >
+              <Package size={12} />
+              <span>{skill.assetFiles?.length || 0}</span>
+            </div>
+          )}
         </div>
       )}
 

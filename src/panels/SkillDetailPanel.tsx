@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import type { PanelComponentProps } from '../types';
 import { useSkillsData } from './skills/hooks/useSkillsData';
 import type { Skill } from './skills/hooks/useSkillsData';
-import { SkillMarkdown, defaultTheme } from 'themed-markdown';
+import { SkillMarkdown } from 'themed-markdown';
 import type { ParsedSkill } from '@principal-ade/markdown-utils';
+import { useTheme } from '@principal-ade/industry-theme';
+import { Code, BookOpen, Package } from 'lucide-react';
 import './SkillDetailPanel.css';
 
 export interface SkillDetailPanelProps extends PanelComponentProps {}
@@ -13,6 +15,7 @@ export const SkillDetailPanel: React.FC<SkillDetailPanelProps> = ({
   events,
   actions,
 }) => {
+  const { theme } = useTheme();
   const { skills, isLoading, error } = useSkillsData({ context });
   const [selectedSkillId, setSelectedSkillId] = useState<string | null>(null);
   const [skill, setSkill] = useState<Skill | null>(null);
@@ -47,9 +50,9 @@ export const SkillDetailPanel: React.FC<SkillDetailPanelProps> = ({
           justifyContent: 'center',
           height: '100%',
           padding: '2rem',
-          backgroundColor: defaultTheme.colors.background,
-          color: defaultTheme.colors.error,
-          fontFamily: defaultTheme.fonts.body,
+          backgroundColor: theme.colors.background,
+          color: theme.colors.error,
+          fontFamily: theme.fonts.body,
         }}
       >
         <div style={{ textAlign: 'center' }}>
@@ -67,9 +70,9 @@ export const SkillDetailPanel: React.FC<SkillDetailPanelProps> = ({
           alignItems: 'center',
           justifyContent: 'center',
           height: '100%',
-          backgroundColor: defaultTheme.colors.background,
-          color: defaultTheme.colors.text,
-          fontFamily: defaultTheme.fonts.body,
+          backgroundColor: theme.colors.background,
+          color: theme.colors.text,
+          fontFamily: theme.fonts.body,
         }}
       >
         Loading skills...
@@ -87,19 +90,19 @@ export const SkillDetailPanel: React.FC<SkillDetailPanelProps> = ({
           justifyContent: 'center',
           height: '100%',
           padding: '2rem',
-          backgroundColor: defaultTheme.colors.background,
-          color: defaultTheme.colors.textSecondary,
-          fontFamily: defaultTheme.fonts.body,
+          backgroundColor: theme.colors.background,
+          color: theme.colors.textSecondary,
+          fontFamily: theme.fonts.body,
           textAlign: 'center',
         }}
       >
         <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⚡</div>
         <h2
           style={{
-            color: defaultTheme.colors.text,
-            fontSize: defaultTheme.fontSizes[4],
-            fontFamily: defaultTheme.fonts.heading,
-            fontWeight: defaultTheme.fontWeights.heading,
+            color: theme.colors.text,
+            fontSize: theme.fontSizes[4],
+            fontFamily: theme.fonts.heading,
+            fontWeight: theme.fontWeights.heading,
             marginBottom: '0.5rem',
           }}
         >
@@ -118,21 +121,114 @@ export const SkillDetailPanel: React.FC<SkillDetailPanelProps> = ({
     console.error('Error parsing skill:', error);
   };
 
+  const hasStructure = skill.hasScripts || skill.hasReferences || skill.hasAssets;
+
   return (
     <div
       style={{
         height: '100%',
-        backgroundColor: defaultTheme.colors.background,
+        backgroundColor: theme.colors.background,
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
       {skill.content ? (
-        <SkillMarkdown
-          content={skill.content}
-          theme={defaultTheme}
-          onParsed={handleParsed}
-          onError={handleError}
-          showRawOnError={true}
-        />
+        <>
+          {hasStructure && (
+            <div
+              style={{
+                padding: '1rem',
+                borderBottom: `1px solid ${theme.colors.border}`,
+                display: 'flex',
+                gap: '0.5rem',
+                flexWrap: 'wrap',
+                backgroundColor: theme.colors.backgroundSecondary,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: theme.fontSizes[1],
+                  color: theme.colors.textSecondary,
+                  fontFamily: theme.fonts.body,
+                  marginRight: '0.5rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
+              >
+                Available:
+              </div>
+              {skill.hasScripts && (
+                <div
+                  style={{
+                    padding: '0.25rem 0.75rem',
+                    borderRadius: '12px',
+                    backgroundColor: theme.colors.primary,
+                    color: theme.colors.background,
+                    fontSize: theme.fontSizes[0],
+                    fontFamily: theme.fonts.body,
+                    fontWeight: 500,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                  }}
+                  title={skill.scriptFiles?.join(', ')}
+                >
+                  <Code size={14} />
+                  <span>Scripts ({skill.scriptFiles?.length || 0})</span>
+                </div>
+              )}
+              {skill.hasReferences && (
+                <div
+                  style={{
+                    padding: '0.25rem 0.75rem',
+                    borderRadius: '12px',
+                    backgroundColor: theme.colors.secondary,
+                    color: theme.colors.background,
+                    fontSize: theme.fontSizes[0],
+                    fontFamily: theme.fonts.body,
+                    fontWeight: 500,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                  }}
+                  title={skill.referenceFiles?.join(', ')}
+                >
+                  <BookOpen size={14} />
+                  <span>References ({skill.referenceFiles?.length || 0})</span>
+                </div>
+              )}
+              {skill.hasAssets && (
+                <div
+                  style={{
+                    padding: '0.25rem 0.75rem',
+                    borderRadius: '12px',
+                    backgroundColor: theme.colors.accent,
+                    color: theme.colors.background,
+                    fontSize: theme.fontSizes[0],
+                    fontFamily: theme.fonts.body,
+                    fontWeight: 500,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                  }}
+                  title={skill.assetFiles?.join(', ')}
+                >
+                  <Package size={14} />
+                  <span>Assets ({skill.assetFiles?.length || 0})</span>
+                </div>
+              )}
+            </div>
+          )}
+          <div style={{ flex: 1, overflow: 'auto' }}>
+            <SkillMarkdown
+              content={skill.content}
+              theme={theme}
+              onParsed={handleParsed}
+              onError={handleError}
+              showRawOnError={true}
+            />
+          </div>
+        </>
       ) : (
         <div
           style={{
@@ -140,8 +236,8 @@ export const SkillDetailPanel: React.FC<SkillDetailPanelProps> = ({
             alignItems: 'center',
             justifyContent: 'center',
             height: '100%',
-            color: defaultTheme.colors.textSecondary,
-            fontFamily: defaultTheme.fonts.body,
+            color: theme.colors.textSecondary,
+            fontFamily: theme.fonts.body,
           }}
         >
           <p>No content available for this skill</p>

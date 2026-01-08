@@ -9,6 +9,14 @@ export interface Skill {
   description?: string;
   content?: string;
   capabilities?: string[];
+  // Skill folder structure metadata
+  skillFolderPath: string;
+  hasScripts: boolean;
+  hasReferences: boolean;
+  hasAssets: boolean;
+  scriptFiles?: string[];
+  referenceFiles?: string[];
+  assetFiles?: string[];
 }
 
 interface UseSkillsDataParams {
@@ -34,9 +42,45 @@ const findSkillFiles = (fileTree: FileTree): string[] => {
 };
 
 /**
+ * Helper function to analyze skill folder structure
+ */
+const analyzeSkillStructure = (fileTree: FileTree, skillPath: string) => {
+  // Get skill directory path (parent of SKILL.md)
+  const skillDir = skillPath.substring(0, skillPath.lastIndexOf('/'));
+
+  // Find all files in the skill directory
+  const skillFiles = fileTree.allFiles.filter(file =>
+    file.relativePath.startsWith(`${skillDir}/`)
+  );
+
+  // Detect folder structure
+  const scriptFiles = skillFiles
+    .filter(f => f.relativePath.startsWith(`${skillDir}/scripts/`))
+    .map(f => f.name);
+
+  const referenceFiles = skillFiles
+    .filter(f => f.relativePath.startsWith(`${skillDir}/references/`))
+    .map(f => f.name);
+
+  const assetFiles = skillFiles
+    .filter(f => f.relativePath.startsWith(`${skillDir}/assets/`))
+    .map(f => f.name);
+
+  return {
+    skillFolderPath: skillDir,
+    hasScripts: scriptFiles.length > 0,
+    hasReferences: referenceFiles.length > 0,
+    hasAssets: assetFiles.length > 0,
+    scriptFiles,
+    referenceFiles,
+    assetFiles,
+  };
+};
+
+/**
  * Helper function to parse SKILL.md content and extract metadata
  */
-const parseSkillContent = (content: string, path: string): Skill => {
+const parseSkillContent = (content: string, path: string, fileTree: FileTree): Skill => {
   // Extract skill name from directory (parent of SKILL.md)
   const pathParts = path.split('/');
   const skillDirName = pathParts[pathParts.length - 2] || 'Unknown Skill';
@@ -66,6 +110,9 @@ const parseSkillContent = (content: string, path: string): Skill => {
     }
   }
 
+  // Analyze skill folder structure
+  const structure = analyzeSkillStructure(fileTree, path);
+
   return {
     id: path,
     name: skillDirName.replace(/-/g, ' ').replace(/_/g, ' '),
@@ -73,6 +120,7 @@ const parseSkillContent = (content: string, path: string): Skill => {
     description: description || 'No description available',
     content,
     capabilities: capabilities.slice(0, 3), // Limit to first 3 capabilities
+    ...structure,
   };
 };
 
@@ -148,7 +196,7 @@ export const useSkillsData = ({
         try {
           const fullPath = `${repoPath}/${skillPath}`;
           const content = await fileSystem.readFile(fullPath);
-          return parseSkillContent(content as string, skillPath);
+          return parseSkillContent(content as string, skillPath, fileTree);
         } catch (err) {
           console.error(`Failed to read skill at ${skillPath}:`, err);
           return null;

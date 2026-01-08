@@ -178,8 +178,16 @@ const builder = new PathsFileTreeBuilder();
 const mockFileTreeWithSkills = builder.build({
   files: [
     '.skills/pdf/SKILL.md',
+    '.skills/pdf/scripts/extract-text.py',
+    '.skills/pdf/scripts/merge-pdfs.py',
+    '.skills/pdf/references/pypdf-docs.md',
+    '.skills/pdf/references/forms.md',
     '.skills/mcp-builder/SKILL.md',
+    '.skills/mcp-builder/references/protocol-spec.md',
+    '.skills/mcp-builder/assets/server-template.ts',
     '.skills/docx/SKILL.md',
+    '.skills/docx/scripts/extract-text.sh',
+    '.skills/docx/references/redlining-guide.md',
     'src/index.ts',
     'README.md',
   ],

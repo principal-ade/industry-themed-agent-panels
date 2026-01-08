@@ -59,7 +59,7 @@
     "@principal-ai/repository-abstraction": "^0.4.0",
     "clsx": "^2.1.1",
     "lucide-react": "^0.552.0",
-    "themed-markdown": "^0.1.79"
+    "themed-markdown": "^0.1.80"
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^4.1.3",

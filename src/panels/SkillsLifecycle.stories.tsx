@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { PathsFileTreeBuilder } from '@principal-ai/repository-abstraction';
 import { ThemeProvider } from '@principal-ade/industry-theme';
@@ -213,47 +213,84 @@ const createSkillsMocks = () => {
  * Interactive workflow showing skill list and detail panels side by side.
  * Click a skill in the list to see its details.
  */
-export const SkillsBrowsing: Story = {
-  render: () => {
-    const mocks = createSkillsMocks();
+const SkillsBrowsingStory = () => {
+  const [events] = useState(() => createMockEvents());
+  const lastEventTimestampRef = useRef<number | null>(null);
+  const mocks = createSkillsMocks();
 
-    return (
-      <ThemeProvider>
+  // Replace the events object with our shared one
+  mocks.events = events;
+
+  // Host orchestration for focus events
+  useEffect(() => {
+    // Skill selected -> focus detail panel
+    const unsubscribeSkillSelected = events.on('skill:selected', (event) => {
+      // Check if we already handled this exact event to prevent infinite loops
+      if (lastEventTimestampRef.current === event.timestamp) {
+        console.log('[SkillsLifecycle] Skipping already-handled event');
+        return;
+      }
+
+      lastEventTimestampRef.current = event.timestamp;
+      console.log('[SkillsLifecycle] skill:selected event received, focusing skill-detail panel');
+
+      // Delay focus event slightly to allow panel's listener to register
+      setTimeout(() => {
+        console.log('[SkillsLifecycle] Emitting panel:focus after brief delay');
+        events.emit({
+          type: 'panel:focus',
+          payload: { panelId: 'skill-detail', panelSlot: 'right' },
+          source: 'skills-lifecycle-story',
+          timestamp: Date.now(),
+        });
+      }, 50);
+    });
+
+    return () => {
+      unsubscribeSkillSelected();
+    };
+  }, [events]);
+
+  return (
+    <ThemeProvider>
+      <div
+        style={{
+          height: '100vh',
+          display: 'grid',
+          gridTemplateColumns: '400px 1fr',
+          gap: 0,
+          background: '#f5f5f5',
+        }}
+      >
+        {/* Skills List Panel */}
         <div
           style={{
-            height: '100vh',
-            display: 'grid',
-            gridTemplateColumns: '400px 1fr',
-            gap: 0,
-            background: '#f5f5f5',
+            borderRight: '1px solid #e0e0e0',
+            overflow: 'hidden',
           }}
         >
-          {/* Skills List Panel */}
-          <div
-            style={{
-              borderRight: '1px solid #e0e0e0',
-              overflow: 'hidden',
-            }}
-          >
-            <SkillsListPanel
-              context={mocks.context}
-              actions={mocks.actions}
-              events={mocks.events}
-            />
-          </div>
-
-          {/* Skill Detail Panel */}
-          <div style={{ overflow: 'hidden' }}>
-            <SkillDetailPanel
-              context={mocks.context}
-              actions={mocks.actions}
-              events={mocks.events}
-            />
-          </div>
+          <SkillsListPanel
+            context={mocks.context}
+            actions={mocks.actions}
+            events={mocks.events}
+          />
         </div>
-      </ThemeProvider>
-    );
-  },
+
+        {/* Skill Detail Panel */}
+        <div style={{ overflow: 'hidden' }}>
+          <SkillDetailPanel
+            context={mocks.context}
+            actions={mocks.actions}
+            events={mocks.events}
+          />
+        </div>
+      </div>
+    </ThemeProvider>
+  );
+};
+
+export const SkillsBrowsing: Story = {
+  render: () => <SkillsBrowsingStory />,
   parameters: {
     docs: {
       description: {
@@ -267,47 +304,84 @@ export const SkillsBrowsing: Story = {
 /**
  * Vertical layout variant showing list above detail
  */
-export const SkillsBrowsingVertical: Story = {
-  render: () => {
-    const mocks = createSkillsMocks();
+const SkillsBrowsingVerticalStory = () => {
+  const [events] = useState(() => createMockEvents());
+  const lastEventTimestampRef = useRef<number | null>(null);
+  const mocks = createSkillsMocks();
 
-    return (
-      <ThemeProvider>
+  // Replace the events object with our shared one
+  mocks.events = events;
+
+  // Host orchestration for focus events
+  useEffect(() => {
+    // Skill selected -> focus detail panel
+    const unsubscribeSkillSelected = events.on('skill:selected', (event) => {
+      // Check if we already handled this exact event to prevent infinite loops
+      if (lastEventTimestampRef.current === event.timestamp) {
+        console.log('[SkillsLifecycle] Skipping already-handled event');
+        return;
+      }
+
+      lastEventTimestampRef.current = event.timestamp;
+      console.log('[SkillsLifecycle] skill:selected event received, focusing skill-detail panel');
+
+      // Delay focus event slightly to allow panel's listener to register
+      setTimeout(() => {
+        console.log('[SkillsLifecycle] Emitting panel:focus after brief delay');
+        events.emit({
+          type: 'panel:focus',
+          payload: { panelId: 'skill-detail', panelSlot: 'bottom' },
+          source: 'skills-lifecycle-story',
+          timestamp: Date.now(),
+        });
+      }, 50);
+    });
+
+    return () => {
+      unsubscribeSkillSelected();
+    };
+  }, [events]);
+
+  return (
+    <ThemeProvider>
+      <div
+        style={{
+          height: '100vh',
+          display: 'grid',
+          gridTemplateRows: '300px 1fr',
+          gap: 0,
+          background: '#f5f5f5',
+        }}
+      >
+        {/* Skills List Panel */}
         <div
           style={{
-            height: '100vh',
-            display: 'grid',
-            gridTemplateRows: '300px 1fr',
-            gap: 0,
-            background: '#f5f5f5',
+            borderBottom: '1px solid #e0e0e0',
+            overflow: 'hidden',
           }}
         >
-          {/* Skills List Panel */}
-          <div
-            style={{
-              borderBottom: '1px solid #e0e0e0',
-              overflow: 'hidden',
-            }}
-          >
-            <SkillsListPanel
-              context={mocks.context}
-              actions={mocks.actions}
-              events={mocks.events}
-            />
-          </div>
-
-          {/* Skill Detail Panel */}
-          <div style={{ overflow: 'hidden' }}>
-            <SkillDetailPanel
-              context={mocks.context}
-              actions={mocks.actions}
-              events={mocks.events}
-            />
-          </div>
+          <SkillsListPanel
+            context={mocks.context}
+            actions={mocks.actions}
+            events={mocks.events}
+          />
         </div>
-      </ThemeProvider>
-    );
-  },
+
+        {/* Skill Detail Panel */}
+        <div style={{ overflow: 'hidden' }}>
+          <SkillDetailPanel
+            context={mocks.context}
+            actions={mocks.actions}
+            events={mocks.events}
+          />
+        </div>
+      </div>
+    </ThemeProvider>
+  );
+};
+
+export const SkillsBrowsingVertical: Story = {
+  render: () => <SkillsBrowsingVerticalStory />,
   parameters: {
     docs: {
       description: {

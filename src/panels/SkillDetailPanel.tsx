@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import type { PanelComponentProps } from '../types';
 import { useSkillsData } from './skills/hooks/useSkillsData';
 import type { Skill } from './skills/hooks/useSkillsData';
 import { SkillMarkdown } from 'themed-markdown';
 import type { ParsedSkill } from '@principal-ade/markdown-utils';
 import { useTheme } from '@principal-ade/industry-theme';
+import { usePanelFocusListener } from '@principal-ade/panel-layouts';
 import { Code, BookOpen, Package } from 'lucide-react';
 import './SkillDetailPanel.css';
 
@@ -19,6 +20,14 @@ export const SkillDetailPanel: React.FC<SkillDetailPanelProps> = ({
   const { skills, isLoading, error } = useSkillsData({ context });
   const [selectedSkillId, setSelectedSkillId] = useState<string | null>(null);
   const [skill, setSkill] = useState<Skill | null>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  // Listen for panel focus events
+  usePanelFocusListener(
+    'skill-detail',
+    events,
+    () => panelRef.current?.focus()
+  );
 
   // Listen for skill selection events
   useEffect(() => {
@@ -125,11 +134,14 @@ export const SkillDetailPanel: React.FC<SkillDetailPanelProps> = ({
 
   return (
     <div
+      ref={panelRef}
+      tabIndex={-1}
       style={{
         height: '100%',
         backgroundColor: theme.colors.background,
         display: 'flex',
         flexDirection: 'column',
+        outline: 'none',
       }}
     >
       {skill.content ? (

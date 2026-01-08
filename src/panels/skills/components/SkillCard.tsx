@@ -1,13 +1,61 @@
 import React from 'react';
 import { useTheme } from '@principal-ade/industry-theme';
-import { FileText, ChevronRight, Code, BookOpen, Package } from 'lucide-react';
-import type { Skill } from '../hooks/useSkillsData';
+import { FileText, ChevronRight, Code, BookOpen, Package, Globe, Folder } from 'lucide-react';
+import type { Skill, SkillSource } from '../hooks/useSkillsData';
 
 interface SkillCardProps {
   skill: Skill;
   onClick?: (skill: Skill) => void;
   isSelected?: boolean;
 }
+
+/**
+ * Helper to get source badge configuration
+ */
+const getSourceConfig = (source: SkillSource) => {
+  switch (source) {
+    case 'global-universal':
+      return {
+        label: 'Global',
+        icon: Globe,
+        color: '#7c3aed', // purple
+        bgColor: '#7c3aed15',
+        borderColor: '#7c3aed30',
+      };
+    case 'global-claude':
+      return {
+        label: 'Global Claude',
+        icon: Globe,
+        color: '#0891b2', // cyan
+        bgColor: '#0891b215',
+        borderColor: '#0891b230',
+      };
+    case 'project-universal':
+      return {
+        label: 'Project',
+        icon: Folder,
+        color: '#16a34a', // green
+        bgColor: '#16a34a15',
+        borderColor: '#16a34a30',
+      };
+    case 'project-claude':
+      return {
+        label: 'Project Claude',
+        icon: Folder,
+        color: '#0284c7', // blue
+        bgColor: '#0284c715',
+        borderColor: '#0284c730',
+      };
+    case 'project-other':
+      return {
+        label: 'Project',
+        icon: Folder,
+        color: '#64748b', // slate
+        bgColor: '#64748b15',
+        borderColor: '#64748b30',
+      };
+  }
+};
 
 /**
  * SkillCard - Displays a single skill with its metadata
@@ -18,6 +66,7 @@ export const SkillCard: React.FC<SkillCardProps> = ({
   isSelected = false,
 }) => {
   const { theme } = useTheme();
+  const sourceConfig = getSourceConfig(skill.source);
 
   return (
     <div
@@ -66,20 +115,42 @@ export const SkillCard: React.FC<SkillCardProps> = ({
           >
             <FileText size={20} color={theme.colors.primary} />
           </div>
-          <h3
-            style={{
-              margin: 0,
-              fontSize: theme.fontSizes[2],
-              fontWeight: theme.fontWeights.semibold,
-              color: theme.colors.text,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              textTransform: 'capitalize',
-            }}
-          >
-            {skill.name}
-          </h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1, minWidth: 0 }}>
+            <h3
+              style={{
+                margin: 0,
+                fontSize: theme.fontSizes[2],
+                fontWeight: theme.fontWeights.semibold,
+                color: theme.colors.text,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                textTransform: 'capitalize',
+              }}
+            >
+              {skill.name}
+            </h3>
+            {/* Source badge */}
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '2px 6px',
+                borderRadius: theme.radii[1],
+                backgroundColor: sourceConfig.bgColor,
+                border: `1px solid ${sourceConfig.borderColor}`,
+                fontSize: theme.fontSizes[0],
+                color: sourceConfig.color,
+                fontWeight: 500,
+                width: 'fit-content',
+              }}
+              title={`Source: ${skill.source}`}
+            >
+              <sourceConfig.icon size={10} />
+              <span>{sourceConfig.label}</span>
+            </div>
+          </div>
         </div>
         {onClick && (
           <ChevronRight

@@ -1,10 +1,12 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { useTheme } from '@principal-ade/industry-theme';
 import { usePanelFocusListener } from '@principal-ade/panel-layouts';
-import { AlertCircle, Search, X, RefreshCw, FileCode } from 'lucide-react';
+import { AlertCircle, Search, X, RefreshCw, FileCode, Globe, Folder } from 'lucide-react';
 import type { PanelComponentProps } from '../types';
 import { useSkillsData, type Skill } from './skills/hooks/useSkillsData';
 import { SkillCard } from './skills/components/SkillCard';
+
+type SkillFilter = 'all' | 'project' | 'global';
 
 /**
  * SkillsListPanel - A panel for displaying Agent Skills from SKILL.md files
@@ -23,6 +25,7 @@ export const SkillsListPanel: React.FC<PanelComponentProps> = ({
   const panelRef = useRef<HTMLDivElement>(null);
   const [selectedSkillId, setSelectedSkillId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [skillFilter, setSkillFilter] = useState<SkillFilter>('all');
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Load skills data
@@ -31,26 +34,43 @@ export const SkillsListPanel: React.FC<PanelComponentProps> = ({
   // Listen for panel focus events
   usePanelFocusListener('skills-list', events, () => panelRef.current?.focus());
 
-  // Filter skills by search query
+  // Filter skills by search query and source type
   const filteredSkills = useMemo(() => {
-    if (!searchQuery.trim()) {
-      return skills;
+    let filtered = skills;
+
+    // Filter by source type
+    if (skillFilter === 'project') {
+      filtered = filtered.filter(
+        (skill) =>
+          skill.source === 'project-universal' ||
+          skill.source === 'project-claude' ||
+          skill.source === 'project-other'
+      );
+    } else if (skillFilter === 'global') {
+      filtered = filtered.filter(
+        (skill) => skill.source === 'global-universal' || skill.source === 'global-claude'
+      );
     }
 
-    const query = searchQuery.toLowerCase().trim();
-    return skills.filter((skill) => {
-      // Search in name
-      if (skill.name.toLowerCase().includes(query)) return true;
-      // Search in description
-      if (skill.description?.toLowerCase().includes(query)) return true;
-      // Search in capabilities
-      if (skill.capabilities?.some((cap) => cap.toLowerCase().includes(query)))
-        return true;
-      // Search in path
-      if (skill.path.toLowerCase().includes(query)) return true;
-      return false;
-    });
-  }, [skills, searchQuery]);
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter((skill) => {
+        // Search in name
+        if (skill.name.toLowerCase().includes(query)) return true;
+        // Search in description
+        if (skill.description?.toLowerCase().includes(query)) return true;
+        // Search in capabilities
+        if (skill.capabilities?.some((cap) => cap.toLowerCase().includes(query)))
+          return true;
+        // Search in path
+        if (skill.path.toLowerCase().includes(query)) return true;
+        return false;
+      });
+    }
+
+    return filtered;
+  }, [skills, searchQuery, skillFilter]);
 
   const handleSkillClick = (skill: Skill) => {
     setSelectedSkillId(skill.id);
@@ -230,6 +250,78 @@ export const SkillsListPanel: React.FC<PanelComponentProps> = ({
             />
           </button>
         </div>
+      </div>
+
+      {/* Filter Toggle */}
+      <div
+        style={{
+          flexShrink: 0,
+          display: 'flex',
+          gap: '8px',
+        }}
+      >
+        <button
+          onClick={() => setSkillFilter('all')}
+          style={{
+            padding: '8px 16px',
+            fontSize: theme.fontSizes[1],
+            fontFamily: theme.fonts.body,
+            border: `1px solid ${skillFilter === 'all' ? theme.colors.primary : theme.colors.border}`,
+            borderRadius: theme.radii[1],
+            background: skillFilter === 'all' ? `${theme.colors.primary}15` : theme.colors.backgroundSecondary,
+            color: skillFilter === 'all' ? theme.colors.primary : theme.colors.text,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            fontWeight: skillFilter === 'all' ? 600 : 400,
+            transition: 'all 0.2s ease',
+          }}
+        >
+          All Skills
+        </button>
+        <button
+          onClick={() => setSkillFilter('project')}
+          style={{
+            padding: '8px 16px',
+            fontSize: theme.fontSizes[1],
+            fontFamily: theme.fonts.body,
+            border: `1px solid ${skillFilter === 'project' ? theme.colors.primary : theme.colors.border}`,
+            borderRadius: theme.radii[1],
+            background: skillFilter === 'project' ? `${theme.colors.primary}15` : theme.colors.backgroundSecondary,
+            color: skillFilter === 'project' ? theme.colors.primary : theme.colors.text,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            fontWeight: skillFilter === 'project' ? 600 : 400,
+            transition: 'all 0.2s ease',
+          }}
+        >
+          <Folder size={14} />
+          Project
+        </button>
+        <button
+          onClick={() => setSkillFilter('global')}
+          style={{
+            padding: '8px 16px',
+            fontSize: theme.fontSizes[1],
+            fontFamily: theme.fonts.body,
+            border: `1px solid ${skillFilter === 'global' ? theme.colors.primary : theme.colors.border}`,
+            borderRadius: theme.radii[1],
+            background: skillFilter === 'global' ? `${theme.colors.primary}15` : theme.colors.backgroundSecondary,
+            color: skillFilter === 'global' ? theme.colors.primary : theme.colors.text,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            fontWeight: skillFilter === 'global' ? 600 : 400,
+            transition: 'all 0.2s ease',
+          }}
+        >
+          <Globe size={14} />
+          Global
+        </button>
       </div>
 
       {/* Error Message */}

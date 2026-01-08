@@ -15,7 +15,7 @@ export const panels: PanelDefinition[] = [
       version: '0.1.0',
       author: 'Principal ADE',
       description: 'Display and manage Agent Skills from SKILL.md files',
-      slices: ['fileTree'], // Data slices this panel depends on
+      slices: ['fileTree', 'globalSkills'], // Data slices this panel depends on
     },
     component: SkillsListPanel,
 
@@ -42,7 +42,7 @@ export const panels: PanelDefinition[] = [
       version: '0.1.0',
       author: 'Principal ADE',
       description: 'Display detailed information about a selected Agent Skill',
-      slices: ['fileTree'], // Data slices this panel depends on
+      slices: ['fileTree', 'globalSkills'], // Data slices this panel depends on
     },
     component: SkillDetailPanel,
 

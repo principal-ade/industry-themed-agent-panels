@@ -206,6 +206,110 @@ const createSkillsMocks = () => {
     },
   });
 
+  // Create mock global skills
+  const mockGlobalSkills = [
+    {
+      id: 'global:~/.agent/skills/security-audit',
+      name: 'Security Audit',
+      path: '/Users/developer/.agent/skills/security-audit/SKILL.md',
+      source: 'global-universal' as const,
+      priority: 2 as const,
+      description: 'Perform comprehensive security audits on codebases and infrastructure',
+      content: createSkillContent(
+        'Security Audit',
+        'Perform comprehensive security audits on codebases and infrastructure',
+        [
+          'Scan for common vulnerabilities (OWASP Top 10)',
+          'Review authentication and authorization implementations',
+          'Check for insecure dependencies',
+          'Analyze security headers and configurations',
+          'Generate security reports with remediation steps',
+        ]
+      ),
+      capabilities: [
+        'Scan for common vulnerabilities (OWASP Top 10)',
+        'Review authentication and authorization implementations',
+        'Check for insecure dependencies',
+      ],
+      skillFolderPath: '/Users/developer/.agent/skills/security-audit',
+      hasScripts: true,
+      hasReferences: true,
+      hasAssets: false,
+      scriptFiles: ['scan.sh', 'audit-dependencies.js'],
+      referenceFiles: ['owasp-checklist.md', 'security-best-practices.md'],
+    },
+    {
+      id: 'global:~/.claude/skills/translation-helper',
+      name: 'Translation Helper',
+      path: '/Users/developer/.claude/skills/translation-helper/SKILL.md',
+      source: 'global-claude' as const,
+      priority: 4 as const,
+      description: 'Translate content between multiple languages while preserving context',
+      content: createSkillContent(
+        'Translation Helper',
+        'Translate content between multiple languages while preserving context',
+        [
+          'Support for 50+ languages',
+          'Preserve technical terminology and code',
+          'Maintain formatting and structure',
+          'Cultural context awareness',
+          'Batch translation capabilities',
+        ]
+      ),
+      capabilities: [
+        'Support for 50+ languages',
+        'Preserve technical terminology and code',
+        'Maintain formatting and structure',
+      ],
+      skillFolderPath: '/Users/developer/.claude/skills/translation-helper',
+      hasScripts: false,
+      hasReferences: true,
+      hasAssets: true,
+      referenceFiles: ['language-codes.md', 'glossary.md'],
+      assetFiles: ['terminology-database.json'],
+    },
+    {
+      id: 'global:~/.agent/skills/api-documentation-generator',
+      name: 'API Documentation Generator',
+      path: '/Users/developer/.agent/skills/api-documentation-generator/SKILL.md',
+      source: 'global-universal' as const,
+      priority: 2 as const,
+      description: 'Generate comprehensive API documentation from code and annotations',
+      content: createSkillContent(
+        'API Documentation Generator',
+        'Generate comprehensive API documentation from code and annotations',
+        [
+          'Parse REST, GraphQL, and gRPC APIs',
+          'Generate interactive API references',
+          'Create code examples in multiple languages',
+          'Auto-generate OpenAPI/Swagger specs',
+          'Export to multiple formats (Markdown, HTML, PDF)',
+        ]
+      ),
+      capabilities: [
+        'Parse REST, GraphQL, and gRPC APIs',
+        'Generate interactive API references',
+        'Create code examples in multiple languages',
+      ],
+      skillFolderPath: '/Users/developer/.agent/skills/api-documentation-generator',
+      hasScripts: true,
+      hasReferences: false,
+      hasAssets: true,
+      scriptFiles: ['generate-docs.js', 'parse-api.py'],
+      assetFiles: ['doc-template.html', 'styles.css'],
+    },
+  ];
+
+  // Add global skills to mock slices
+  mockSlices.set('globalSkills', {
+    scope: 'global',
+    name: 'globalSkills',
+    data: { skills: mockGlobalSkills },
+    loading: false,
+    error: null,
+    refresh: async () => {},
+  });
+
   return { context, actions, events };
 };
 

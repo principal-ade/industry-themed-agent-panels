@@ -416,13 +416,14 @@ const MyPanel: React.FC<PanelComponentProps> = ({ context }) => {
 
 Panels can access these data slices from the host:
 
-| Slice      | Type             | Description                  |
-| ---------- | ---------------- | ---------------------------- |
-| `git`      | `GitStatus`      | Git repository status        |
-| `markdown` | `MarkdownFile[]` | Markdown files in repository |
-| `fileTree` | `FileTree`       | File system tree structure   |
-| `packages` | `PackageLayer[]` | Package dependencies         |
-| `quality`  | `QualityMetrics` | Code quality metrics         |
+| Slice          | Type               | Description                           |
+| -------------- | ------------------ | ------------------------------------- |
+| `git`          | `GitStatus`        | Git repository status                 |
+| `markdown`     | `MarkdownFile[]`   | Markdown files in repository          |
+| `fileTree`     | `FileTree`         | File system tree structure            |
+| `packages`     | `PackageLayer[]`   | Package dependencies                  |
+| `quality`      | `QualityMetrics`   | Code quality metrics                  |
+| `globalSkills` | `GlobalSkillsSlice`| Global skills from user directories   |
 
 Check availability before use:
 
@@ -431,6 +432,73 @@ if (context.hasSlice('git') && !context.isSliceLoading('git')) {
   // Use git data
 }
 ```
+
+### Global Skills Support
+
+The Skills List panel supports both project and global skills:
+
+**Project Skills** (discovered via `fileTree`):
+- Any `SKILL.md` file in the project file tree
+- Automatically detected and categorized by path:
+  - `.agent/skills/` → `project-universal`
+  - `.claude/skills/` → `project-claude`
+  - Other locations → `project-other`
+
+**Global Skills** (provided via `globalSkills` slice):
+- `~/.agent/skills/` → `global-universal`
+- `~/.claude/skills/` → `global-claude`
+
+#### Host Implementation
+
+To provide global skills, the host application must:
+
+1. Scan global skill directories
+2. Read and parse SKILL.md files
+3. Analyze folder structure (scripts/, references/, assets/)
+4. Provide pre-formatted data through the `globalSkills` slice:
+
+```typescript
+interface GlobalSkillsSlice {
+  skills: Skill[];
+}
+
+interface Skill {
+  id: string;                    // e.g., "global:~/.agent/skills/skill-name"
+  name: string;
+  path: string;                  // Absolute path to SKILL.md
+  source: SkillSource;           // 'global-universal' | 'global-claude'
+  priority: 1 | 2 | 3 | 4 | 5;
+  description?: string;
+  content: string;               // Full SKILL.md content
+  capabilities?: string[];
+  skillFolderPath: string;
+  hasScripts: boolean;
+  hasReferences: boolean;
+  hasAssets: boolean;
+  scriptFiles?: string[];
+  referenceFiles?: string[];
+  assetFiles?: string[];
+}
+
+// Example usage:
+context.setSlice('globalSkills', {
+  scope: 'global',
+  name: 'globalSkills',
+  data: { skills: mockGlobalSkills },
+  loading: false,
+  error: null,
+  refresh: async () => {},
+});
+```
+
+#### UI Features
+
+The Skills List panel includes:
+- **Filter Toggle**: Switch between All/Project/Global skills
+- **Source Badges**: Visual indicators showing skill origin
+  - 🌐 Global (purple/cyan)
+  - 📁 Project (green/blue/slate)
+- **Merged View**: Seamlessly displays both local and global skills
 
 ## Event Types
 

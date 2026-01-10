@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTheme } from '@principal-ade/industry-theme';
-import { FileText, ChevronRight, Code, BookOpen, Package, Globe, Folder } from 'lucide-react';
+import { FileText, ChevronRight, Code, BookOpen, Package, Globe, Folder, Github } from 'lucide-react';
 import type { Skill, SkillSource } from '../hooks/useSkillsData';
 
 interface SkillCardProps {
@@ -131,24 +131,50 @@ export const SkillCard: React.FC<SkillCardProps> = ({
               {skill.name}
             </h3>
             {/* Source badge */}
-            <div
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-                padding: '2px 6px',
-                borderRadius: theme.radii[1],
-                backgroundColor: sourceConfig.bgColor,
-                border: `1px solid ${sourceConfig.borderColor}`,
-                fontSize: theme.fontSizes[0],
-                color: sourceConfig.color,
-                fontWeight: 500,
-                width: 'fit-content',
-              }}
-              title={`Source: ${skill.source}`}
-            >
-              <sourceConfig.icon size={10} />
-              <span>{sourceConfig.label}</span>
+            <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: '2px 6px',
+                  borderRadius: theme.radii[1],
+                  backgroundColor: sourceConfig.bgColor,
+                  border: `1px solid ${sourceConfig.borderColor}`,
+                  fontSize: theme.fontSizes[0],
+                  color: sourceConfig.color,
+                  fontWeight: 500,
+                  width: 'fit-content',
+                }}
+                title={`Source: ${skill.source}`}
+              >
+                <sourceConfig.icon size={10} />
+                <span>{sourceConfig.label}</span>
+              </div>
+
+              {/* GitHub source badge (if installed from GitHub) */}
+              {skill.metadata?.owner && skill.metadata?.repo && (
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: '2px 6px',
+                    borderRadius: theme.radii[1],
+                    backgroundColor: `${theme.colors.textSecondary}15`,
+                    border: `1px solid ${theme.colors.textSecondary}30`,
+                    fontSize: theme.fontSizes[0],
+                    color: theme.colors.textSecondary,
+                    fontWeight: 500,
+                    fontFamily: theme.fonts.monospace,
+                    width: 'fit-content',
+                  }}
+                  title={`From: ${skill.metadata.installedFrom}\nInstalled: ${skill.metadata.installedAt ? new Date(skill.metadata.installedAt).toLocaleString() : 'Unknown'}`}
+                >
+                  <Github size={10} />
+                  <span>{skill.metadata.owner}/{skill.metadata.repo}</span>
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -9,6 +9,18 @@ export type SkillSource =
   | 'global-claude'      // ~/.claude/skills/ (from globalSkills slice)
   | 'project-other';     // any other location in project (from fileTree)
 
+export interface SkillMetadata {
+  installedFrom?: string;
+  skillPath?: string;
+  owner?: string;
+  repo?: string;
+  branch?: string;
+  installedAt?: string;
+  destination?: string;
+  sha?: string;
+  files?: string[];
+}
+
 export interface Skill {
   id: string;
   name: string;
@@ -27,6 +39,8 @@ export interface Skill {
   // Source and priority metadata (for display purposes only)
   source: SkillSource;
   priority: 1 | 2 | 3 | 4 | 5;  // 1=project-universal, 2=global-universal, 3=project-claude, 4=global-claude, 5=project-other
+  // Installation metadata (from .metadata.json)
+  metadata?: SkillMetadata;
 }
 
 /**
@@ -61,11 +75,21 @@ const determineSkillSource = (path: string): { source: SkillSource; priority: 1 
 };
 
 /**
- * Helper function to find SKILL.md files from the FileTree's allFiles array
+ * Helper function to find skill markdown files from the FileTree's allFiles array
+ * Looks for any .md files in .agent/skills/ or .claude/skills/ directories
  */
 const findSkillFiles = (fileTree: FileTree): string[] => {
-  // Filter allFiles for files named 'SKILL.md'
-  const skillFiles = fileTree.allFiles.filter(file => file.name === 'SKILL.md');
+  // Filter allFiles for .md files in skill directories
+  const skillFiles = fileTree.allFiles.filter(file => {
+    const path = file.relativePath;
+    const isMarkdown = file.name.endsWith('.md');
+    const isInSkillDir = path.includes('.agent/skills/') || path.includes('.claude/skills/');
+
+    // Exclude metadata files
+    const isMetadata = file.name === '.metadata.json' || file.name.startsWith('.');
+
+    return isMarkdown && isInSkillDir && !isMetadata;
+  });
 
   // Return their relative paths
   return skillFiles.map(file => file.relativePath);
@@ -75,9 +99,28 @@ const findSkillFiles = (fileTree: FileTree): string[] => {
  * Helper function to analyze skill folder structure
  */
 const analyzeSkillStructure = (fileTree: FileTree, skillPath: string) => {
-  // Get skill directory path (parent of SKILL.md)
+  // Get skill directory path (parent of skill markdown file)
   const skillDir = skillPath.substring(0, skillPath.lastIndexOf('/'));
+  const pathParts = skillPath.split('/');
+  const parentDir = pathParts[pathParts.length - 2];
 
+  // Check if this is a standalone file directly in the skills directory
+  const isStandaloneFile = parentDir === 'skills';
+
+  // For standalone files, there's no skill-specific folder structure
+  if (isStandaloneFile) {
+    return {
+      skillFolderPath: skillDir,
+      hasScripts: false,
+      hasReferences: false,
+      hasAssets: false,
+      scriptFiles: [],
+      referenceFiles: [],
+      assetFiles: [],
+    };
+  }
+
+  // For skills in subdirectories, analyze the folder structure
   // Find all files in the skill directory
   const skillFiles = fileTree.allFiles.filter(file =>
     file.relativePath.startsWith(`${skillDir}/`)
@@ -108,12 +151,25 @@ const analyzeSkillStructure = (fileTree: FileTree, skillPath: string) => {
 };
 
 /**
- * Helper function to parse SKILL.md content and extract metadata
+ * Helper function to parse skill markdown content and extract metadata
  */
-const parseSkillContent = (content: string, path: string, fileTree: FileTree): Skill => {
-  // Extract skill name from directory (parent of SKILL.md)
+const parseSkillContent = async (
+  content: string,
+  path: string,
+  fileTree: FileTree,
+  fileSystemAdapter?: any
+): Promise<Skill> => {
+  // Extract skill name from path
   const pathParts = path.split('/');
-  const skillDirName = pathParts[pathParts.length - 2] || 'Unknown Skill';
+  const fileName = pathParts[pathParts.length - 1];
+  const parentDir = pathParts[pathParts.length - 2];
+
+  // If the file is directly in a skills directory, use the filename as the skill name
+  // Otherwise, use the parent directory name (for skills in subdirectories)
+  const isDirectlyInSkillsDir = parentDir === 'skills';
+  const skillDirName = isDirectlyInSkillsDir
+    ? fileName.replace(/\.md$/, '') // Remove .md extension
+    : parentDir;
 
   // Try to extract description from the first paragraph after a heading
   let description = '';
@@ -146,6 +202,20 @@ const parseSkillContent = (content: string, path: string, fileTree: FileTree): S
   // Determine source and priority
   const { source, priority } = determineSkillSource(path);
 
+  // Try to read .metadata.json if it exists
+  let metadata: SkillMetadata | undefined;
+  if (fileSystemAdapter && structure.skillFolderPath) {
+    try {
+      const metadataPath = `${structure.skillFolderPath}/.metadata.json`;
+      const metadataContent = await fileSystemAdapter.readFile(metadataPath);
+      metadata = JSON.parse(metadataContent);
+      console.log('[useSkillsData] Loaded metadata for skill:', skillDirName, metadata);
+    } catch (error) {
+      // .metadata.json doesn't exist or couldn't be read - this is fine
+      console.debug('[useSkillsData] No metadata file for skill:', skillDirName);
+    }
+  }
+
   return {
     id: path,
     name: skillDirName.replace(/-/g, ' ').replace(/_/g, ' '),
@@ -156,6 +226,7 @@ const parseSkillContent = (content: string, path: string, fileTree: FileTree): S
     ...structure,
     source,
     priority,
+    metadata,
   };
 };
 
@@ -169,49 +240,26 @@ export const useSkillsData = ({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Extract stable references from context to avoid unnecessary re-renders
+  const fileTreeSlice = context.getSlice<FileTree>('fileTree');
+  const fileTree = fileTreeSlice?.data;
+  const fileTreeSha = fileTree?.sha; // Use SHA as stable identity
+  const globalSkillsSlice = context.getSlice<GlobalSkillsSlice>('globalSkills');
+  const globalSkills = globalSkillsSlice?.data?.skills || [];
+  const repoPath = context.currentScope.repository?.path;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const fileSystem = (context as any).adapters?.fileSystem;
+
   const loadSkills = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      // Load local skills from fileTree
-      const fileTreeSlice = context.getSlice<FileTree>('fileTree');
-      const fileTree = fileTreeSlice?.data;
       let localSkills: Skill[] = [];
 
-      if (fileTree) {
-        // eslint-disable-next-line no-console
-        console.log('[useSkillsData] Full context:', context);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const fileSystem = (context as any).adapters?.fileSystem;
-        // eslint-disable-next-line no-console
-        console.log('[useSkillsData] Adapters:', (context as any).adapters);
-        // eslint-disable-next-line no-console
-        console.log('[useSkillsData] FileSystem adapter:', fileSystem);
-        // eslint-disable-next-line no-console
-        console.log('[useSkillsData] fileSystem?.readFile:', fileSystem?.readFile);
-        // eslint-disable-next-line no-console
-        console.log('[useSkillsData] typeof fileSystem?.readFile:', typeof fileSystem?.readFile);
-        // eslint-disable-next-line no-console
-        console.log('[useSkillsData] Check result (!fileSystem?.readFile):', !fileSystem?.readFile);
-
-        if (!fileSystem?.readFile) {
-          console.error('[useSkillsData] FAILING CHECK - fileSystem:', fileSystem);
-          throw new Error('File system adapter not available');
-        }
-
-        // eslint-disable-next-line no-console
-        console.log('[useSkillsData] Check passed! Continuing...');
-
-        const repoPath = context.currentScope.repository?.path;
-        if (!repoPath) {
-          throw new Error('Repository path not available');
-        }
-
+      if (fileTree && fileSystem?.readFile && repoPath) {
         // eslint-disable-next-line no-console
         console.log('[useSkillsData] fileTree:', fileTree);
-        // eslint-disable-next-line no-console
-        console.log('[useSkillsData] fileTree.allFiles:', fileTree.allFiles);
         // eslint-disable-next-line no-console
         console.log('[useSkillsData] typeof fileTree:', typeof fileTree);
         // eslint-disable-next-line no-console
@@ -228,7 +276,7 @@ export const useSkillsData = ({
           try {
             const fullPath = `${repoPath}/${skillPath}`;
             const content = await fileSystem.readFile(fullPath);
-            return parseSkillContent(content as string, skillPath, fileTree);
+            return parseSkillContent(content as string, skillPath, fileTree, fileSystem);
           } catch (err) {
             console.error(`Failed to read skill at ${skillPath}:`, err);
             return null;
@@ -239,10 +287,6 @@ export const useSkillsData = ({
           (skill): skill is Skill => skill !== null
         );
       }
-
-      // Load global skills from globalSkills slice
-      const globalSkillsSlice = context.getSlice<GlobalSkillsSlice>('globalSkills');
-      const globalSkills = globalSkillsSlice?.data?.skills || [];
 
       // eslint-disable-next-line no-console
       console.log('[useSkillsData] Global skills:', globalSkills);
@@ -261,7 +305,7 @@ export const useSkillsData = ({
     } finally {
       setIsLoading(false);
     }
-  }, [context]);
+  }, [fileTree, fileTreeSha, globalSkills, repoPath, fileSystem]);
 
   const refreshSkills = useCallback(async () => {
     await loadSkills();

@@ -1,12 +1,20 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { useTheme } from '@principal-ade/industry-theme';
 import { usePanelFocusListener } from '@principal-ade/panel-layouts';
-import { AlertCircle, Search, X, RefreshCw, FileCode, Globe, Folder } from 'lucide-react';
+import { AlertCircle, Search, X, RefreshCw, FileCode } from 'lucide-react';
 import type { PanelComponentProps } from '../types';
 import { useSkillsData, type Skill } from './skills/hooks/useSkillsData';
 import { SkillCard } from './skills/components/SkillCard';
 
 type SkillFilter = 'all' | 'project' | 'global';
+
+export interface SkillsListPanelProps extends PanelComponentProps {
+  /**
+   * When true, the panel operates in browse mode (e.g., browsing GitHub repos):
+   * - Changes "Project" filter label to "Git Repo"
+   */
+  browseMode?: boolean;
+}
 
 /**
  * SkillsListPanel - A panel for displaying Agent Skills from SKILL.md files
@@ -17,9 +25,10 @@ type SkillFilter = 'all' | 'project' | 'global';
  * - Skill metadata (name, description, capabilities)
  * - Click to select and emit events for detail views
  */
-export const SkillsListPanel: React.FC<PanelComponentProps> = ({
+export const SkillsListPanel: React.FC<SkillsListPanelProps> = ({
   context,
   events,
+  browseMode = false,
 }) => {
   const { theme } = useTheme();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -33,6 +42,12 @@ export const SkillsListPanel: React.FC<PanelComponentProps> = ({
 
   // Listen for panel focus events
   usePanelFocusListener('skills-list', events, () => panelRef.current?.focus());
+
+  // Check if there's a repository loaded (to determine if filters should be shown)
+  const hasRepository = useMemo(() => {
+    const fileTreeSlice = context.getSlice<any>('fileTree');
+    return !!fileTreeSlice?.data;
+  }, [context]);
 
   // Filter skills by search query and source type
   const filteredSkills = useMemo(() => {
@@ -252,77 +267,77 @@ export const SkillsListPanel: React.FC<PanelComponentProps> = ({
         </div>
       </div>
 
-      {/* Filter Toggle */}
-      <div
-        style={{
-          flexShrink: 0,
-          display: 'flex',
-          gap: '8px',
-        }}
-      >
-        <button
-          onClick={() => setSkillFilter('all')}
+      {/* Filter Toggle - Only show when repository is loaded */}
+      {hasRepository && (
+        <div
           style={{
-            padding: '8px 16px',
-            fontSize: theme.fontSizes[1],
-            fontFamily: theme.fonts.body,
-            border: `1px solid ${skillFilter === 'all' ? theme.colors.primary : theme.colors.border}`,
-            borderRadius: theme.radii[1],
-            background: skillFilter === 'all' ? `${theme.colors.primary}15` : theme.colors.backgroundSecondary,
-            color: skillFilter === 'all' ? theme.colors.primary : theme.colors.text,
-            cursor: 'pointer',
+            flexShrink: 0,
             display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            fontWeight: skillFilter === 'all' ? 600 : 400,
-            transition: 'all 0.2s ease',
+            gap: '8px',
           }}
         >
-          All Skills
-        </button>
-        <button
-          onClick={() => setSkillFilter('project')}
-          style={{
-            padding: '8px 16px',
-            fontSize: theme.fontSizes[1],
-            fontFamily: theme.fonts.body,
-            border: `1px solid ${skillFilter === 'project' ? theme.colors.primary : theme.colors.border}`,
-            borderRadius: theme.radii[1],
-            background: skillFilter === 'project' ? `${theme.colors.primary}15` : theme.colors.backgroundSecondary,
-            color: skillFilter === 'project' ? theme.colors.primary : theme.colors.text,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            fontWeight: skillFilter === 'project' ? 600 : 400,
-            transition: 'all 0.2s ease',
-          }}
-        >
-          <Folder size={14} />
-          Project
-        </button>
-        <button
-          onClick={() => setSkillFilter('global')}
-          style={{
-            padding: '8px 16px',
-            fontSize: theme.fontSizes[1],
-            fontFamily: theme.fonts.body,
-            border: `1px solid ${skillFilter === 'global' ? theme.colors.primary : theme.colors.border}`,
-            borderRadius: theme.radii[1],
-            background: skillFilter === 'global' ? `${theme.colors.primary}15` : theme.colors.backgroundSecondary,
-            color: skillFilter === 'global' ? theme.colors.primary : theme.colors.text,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            fontWeight: skillFilter === 'global' ? 600 : 400,
-            transition: 'all 0.2s ease',
-          }}
-        >
-          <Globe size={14} />
-          Global
-        </button>
-      </div>
+          <button
+            onClick={() => setSkillFilter('all')}
+            style={{
+              padding: '8px 16px',
+              fontSize: theme.fontSizes[1],
+              fontFamily: theme.fonts.body,
+              border: `1px solid ${skillFilter === 'all' ? theme.colors.primary : theme.colors.border}`,
+              borderRadius: theme.radii[1],
+              background: skillFilter === 'all' ? `${theme.colors.primary}15` : theme.colors.backgroundSecondary,
+              color: skillFilter === 'all' ? theme.colors.primary : theme.colors.text,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontWeight: skillFilter === 'all' ? 600 : 400,
+              transition: 'all 0.2s ease',
+            }}
+          >
+            All Skills
+          </button>
+          <button
+            onClick={() => setSkillFilter('project')}
+            style={{
+              padding: '8px 16px',
+              fontSize: theme.fontSizes[1],
+              fontFamily: theme.fonts.body,
+              border: `1px solid ${skillFilter === 'project' ? theme.colors.primary : theme.colors.border}`,
+              borderRadius: theme.radii[1],
+              background: skillFilter === 'project' ? `${theme.colors.primary}15` : theme.colors.backgroundSecondary,
+              color: skillFilter === 'project' ? theme.colors.primary : theme.colors.text,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontWeight: skillFilter === 'project' ? 600 : 400,
+              transition: 'all 0.2s ease',
+            }}
+          >
+            {browseMode ? 'Git Repo' : 'Project'}
+          </button>
+          <button
+            onClick={() => setSkillFilter('global')}
+            style={{
+              padding: '8px 16px',
+              fontSize: theme.fontSizes[1],
+              fontFamily: theme.fonts.body,
+              border: `1px solid ${skillFilter === 'global' ? theme.colors.primary : theme.colors.border}`,
+              borderRadius: theme.radii[1],
+              background: skillFilter === 'global' ? `${theme.colors.primary}15` : theme.colors.backgroundSecondary,
+              color: skillFilter === 'global' ? theme.colors.primary : theme.colors.text,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontWeight: skillFilter === 'global' ? 600 : 400,
+              transition: 'all 0.2s ease',
+            }}
+          >
+            Global
+          </button>
+        </div>
+      )}
 
       {/* Error Message */}
       {error && (

@@ -361,3 +361,138 @@ export const WithSearch: Story = {
     );
   },
 };
+
+/**
+ * Browse mode - for browsing GitHub repositories
+ * Shows "Git Repo" instead of "Project" in filter
+ */
+export const BrowseMode: Story = {
+  render: () => {
+    const mockSlices = new Map<string, DataSlice>();
+    mockSlices.set('fileTree', {
+      scope: 'repository',
+      name: 'fileTree',
+      data: mockFileTreeWithSkills,
+      loading: false,
+      error: null,
+      refresh: async () => {},
+    });
+
+    // Mock some global skills
+    const mockGlobalSkills = [
+      {
+        name: 'brand-guidelines',
+        path: '/Users/developer/.agent/skills/brand-guidelines/SKILL.md',
+        content: createSkillContent(
+          'Brand Guidelines',
+          'Apply brand guidelines and style standards to content',
+          ['Ensure brand consistency', 'Apply color schemes', 'Maintain typography standards']
+        ),
+      },
+    ];
+
+    mockSlices.set('globalSkills', {
+      scope: 'workspace',
+      name: 'globalSkills',
+      data: { skills: mockGlobalSkills },
+      loading: false,
+      error: null,
+      refresh: async () => {},
+    });
+
+    return (
+      <MockPanelProvider
+        contextOverrides={{
+          slices: mockSlices,
+          adapters: {
+            fileSystem: createMockFileSystemWithSkills(),
+          },
+        } as any}
+      >
+        {(props) => <SkillsListPanel {...props} browseMode={true} />}
+      </MockPanelProvider>
+    );
+  },
+};
+
+/**
+ * Browse mode with no repository loaded
+ * Filters should be hidden
+ */
+export const BrowseModeNoRepo: Story = {
+  render: () => {
+    const mockSlices = new Map<string, DataSlice>();
+
+    // No fileTree data
+    mockSlices.set('fileTree', {
+      scope: 'repository',
+      name: 'fileTree',
+      data: null,
+      loading: false,
+      error: null,
+      refresh: async () => {},
+    });
+
+    // Only global skills
+    const mockGlobalSkills = [
+      {
+        name: 'brand-guidelines',
+        path: '/Users/developer/.agent/skills/brand-guidelines/SKILL.md',
+        content: createSkillContent(
+          'Brand Guidelines',
+          'Apply brand guidelines and style standards to content',
+          ['Ensure brand consistency', 'Apply color schemes', 'Maintain typography standards']
+        ),
+      },
+      {
+        name: 'meeting-summarizer',
+        path: '/Users/developer/.claude/skills/meeting-summarizer/SKILL.md',
+        content: createSkillContent(
+          'Meeting Summarizer',
+          'Summarize meeting notes and extract action items',
+          ['Extract key decisions', 'Identify action items', 'Generate meeting summaries']
+        ),
+      },
+    ];
+
+    mockSlices.set('globalSkills', {
+      scope: 'workspace',
+      name: 'globalSkills',
+      data: { skills: mockGlobalSkills },
+      loading: false,
+      error: null,
+      refresh: async () => {},
+    });
+
+    return (
+      <MockPanelProvider
+        contextOverrides={{
+          slices: mockSlices,
+          adapters: {
+            fileSystem: {
+              readFile: async (path: string) => {
+                if (path.includes('brand-guidelines')) {
+                  return createSkillContent(
+                    'Brand Guidelines',
+                    'Apply brand guidelines and style standards to content',
+                    ['Ensure brand consistency', 'Apply color schemes', 'Maintain typography standards']
+                  );
+                }
+                if (path.includes('meeting-summarizer')) {
+                  return createSkillContent(
+                    'Meeting Summarizer',
+                    'Summarize meeting notes and extract action items',
+                    ['Extract key decisions', 'Identify action items', 'Generate meeting summaries']
+                  );
+                }
+                throw new Error(`File not found: ${path}`);
+              },
+            },
+          },
+        } as any}
+      >
+        {(props) => <SkillsListPanel {...props} browseMode={true} />}
+      </MockPanelProvider>
+    );
+  },
+};

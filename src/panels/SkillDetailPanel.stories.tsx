@@ -177,17 +177,17 @@ pandoc --track-changes=all path-to-file.docx -o output.md
 const builder = new PathsFileTreeBuilder();
 const mockFileTreeWithSkills = builder.build({
   files: [
-    '.skills/pdf/SKILL.md',
-    '.skills/pdf/scripts/extract-text.py',
-    '.skills/pdf/scripts/merge-pdfs.py',
-    '.skills/pdf/references/pypdf-docs.md',
-    '.skills/pdf/references/forms.md',
-    '.skills/mcp-builder/SKILL.md',
-    '.skills/mcp-builder/references/protocol-spec.md',
-    '.skills/mcp-builder/assets/server-template.ts',
-    '.skills/docx/SKILL.md',
-    '.skills/docx/scripts/extract-text.sh',
-    '.skills/docx/references/redlining-guide.md',
+    '.agent/skills/pdf/SKILL.md',
+    '.agent/skills/pdf/scripts/extract-text.py',
+    '.agent/skills/pdf/scripts/merge-pdfs.py',
+    '.agent/skills/pdf/references/pypdf-docs.md',
+    '.agent/skills/pdf/references/forms.md',
+    '.agent/skills/mcp-builder/SKILL.md',
+    '.agent/skills/mcp-builder/references/protocol-spec.md',
+    '.agent/skills/mcp-builder/assets/server-template.ts',
+    '.agent/skills/docx/SKILL.md',
+    '.agent/skills/docx/scripts/extract-text.sh',
+    '.agent/skills/docx/references/redlining-guide.md',
     'src/index.ts',
     'README.md',
   ],
@@ -205,7 +205,7 @@ const createMockFileSystemWithSkills = () => {
   return {
     readFile: async (path: string) => {
       // Extract the skill path from the full path
-      const match = path.match(/\.skills\/([^/]+\/SKILL\.md)$/);
+      const match = path.match(/\.agent\/skills\/([^/]+\/SKILL\.md)$/);
       if (match && skillContents[match[1]]) {
         return skillContents[match[1]];
       }
@@ -268,7 +268,7 @@ export const WithSelection: Story = {
             type: 'skill:selected',
             source: 'storybook',
             timestamp: Date.now(),
-            payload: { skillId: '.skills/pdf/SKILL.md' },
+            payload: { skillId: '.agent/skills/pdf/SKILL.md' },
           });
         }, 0);
 
@@ -351,7 +351,7 @@ export const MCPBuilderSelected: Story = {
             type: 'skill:selected',
             source: 'storybook',
             timestamp: Date.now(),
-            payload: { skillId: '.skills/mcp-builder/SKILL.md' },
+            payload: { skillId: '.agent/skills/mcp-builder/SKILL.md' },
           });
         }, 0);
 
@@ -398,7 +398,7 @@ export const DOCXSelected: Story = {
             type: 'skill:selected',
             source: 'storybook',
             timestamp: Date.now(),
-            payload: { skillId: '.skills/docx/SKILL.md' },
+            payload: { skillId: '.agent/skills/docx/SKILL.md' },
           });
         }, 0);
 

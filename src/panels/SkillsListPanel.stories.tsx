@@ -66,19 +66,19 @@ This skill can be used by AI agents to ${description.toLowerCase()}.
 const builder = new PathsFileTreeBuilder();
 const mockFileTreeWithSkills = builder.build({
   files: [
-    '.skills/legal-review/SKILL.md',
-    '.skills/legal-review/references/contract-templates.md',
-    '.skills/legal-review/references/compliance-guide.md',
-    '.skills/data-analysis/SKILL.md',
-    '.skills/data-analysis/scripts/analyze.py',
-    '.skills/data-analysis/scripts/visualize.py',
-    '.skills/data-analysis/assets/template.xlsx',
-    '.skills/presentation-maker/SKILL.md',
-    '.skills/presentation-maker/scripts/generate-slides.js',
-    '.skills/presentation-maker/assets/theme-corporate.pptx',
-    '.skills/presentation-maker/assets/theme-modern.pptx',
-    '.skills/code-reviewer/SKILL.md',
-    '.skills/code-reviewer/references/best-practices.md',
+    '.agent/skills/legal-review/SKILL.md',
+    '.agent/skills/legal-review/references/contract-templates.md',
+    '.agent/skills/legal-review/references/compliance-guide.md',
+    '.agent/skills/data-analysis/SKILL.md',
+    '.agent/skills/data-analysis/scripts/analyze.py',
+    '.agent/skills/data-analysis/scripts/visualize.py',
+    '.agent/skills/data-analysis/assets/template.xlsx',
+    '.agent/skills/presentation-maker/SKILL.md',
+    '.agent/skills/presentation-maker/scripts/generate-slides.js',
+    '.agent/skills/presentation-maker/assets/theme-corporate.pptx',
+    '.agent/skills/presentation-maker/assets/theme-modern.pptx',
+    '.agent/skills/code-reviewer/SKILL.md',
+    '.agent/skills/code-reviewer/references/best-practices.md',
     'src/index.ts',
     'README.md',
   ],
@@ -129,7 +129,7 @@ const createMockFileSystemWithSkills = () => {
   return {
     readFile: async (path: string) => {
       // Extract the skill path from the full path
-      const match = path.match(/\.skills\/([^/]+\/SKILL\.md)$/);
+      const match = path.match(/\.agent\/skills\/([^/]+\/SKILL\.md)$/);
       if (match && skillContents[match[1]]) {
         return skillContents[match[1]];
       }
@@ -247,7 +247,7 @@ export const ManySkills: Story = {
     // Generate a large file tree with many skills
     const manySkillsPaths = Array.from(
       { length: 20 },
-      (_, i) => `.skills/skill-${i + 1}/SKILL.md`
+      (_, i) => `.agent/skills/skill-${i + 1}/SKILL.md`
     );
     const manySkillsTree = builder.build({
       files: [...manySkillsPaths, 'src/index.ts', 'README.md'],

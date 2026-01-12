@@ -78,12 +78,12 @@ const createSkillsMocks = () => {
   const builder = new PathsFileTreeBuilder();
   const mockFileTreeWithSkills = builder.build({
     files: [
-      '.skills/legal-review/SKILL.md',
-      '.skills/data-analysis/SKILL.md',
-      '.skills/presentation-maker/SKILL.md',
-      '.skills/code-reviewer/SKILL.md',
-      '.skills/sql-generator/SKILL.md',
-      '.skills/email-drafter/SKILL.md',
+      '.agent/skills/legal-review/SKILL.md',
+      '.agent/skills/data-analysis/SKILL.md',
+      '.agent/skills/presentation-maker/SKILL.md',
+      '.agent/skills/code-reviewer/SKILL.md',
+      '.agent/skills/sql-generator/SKILL.md',
+      '.agent/skills/email-drafter/SKILL.md',
       'src/index.ts',
       'README.md',
     ],
@@ -161,7 +161,7 @@ const createSkillsMocks = () => {
 
   const fileSystem = {
     readFile: async (path: string) => {
-      const match = path.match(/\.skills\/([^/]+\/SKILL\.md)$/);
+      const match = path.match(/\.agent\/skills\/([^/]+\/SKILL\.md)$/);
       if (match && skillContents[match[1]]) {
         return skillContents[match[1]];
       }

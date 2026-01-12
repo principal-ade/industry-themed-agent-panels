@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import type { FileTree } from '@principal-ai/repository-abstraction';
 import type { PanelContextValue } from '../../../types';
 
@@ -42,6 +42,9 @@ export interface Skill {
   // Installation metadata (from .metadata.json)
   metadata?: SkillMetadata;
 }
+
+// Stable empty array to prevent unnecessary re-renders
+const EMPTY_SKILLS_ARRAY: Skill[] = [];
 
 /**
  * Global skills data provided by the host application
@@ -236,7 +239,7 @@ const parseSkillContent = async (
 export const useSkillsData = ({
   context,
 }: UseSkillsDataParams): UseSkillsDataReturn => {
-  const [skills, setSkills] = useState<Skill[]>([]);
+  const [skills, setSkills] = useState<Skill[]>(EMPTY_SKILLS_ARRAY);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -245,12 +248,25 @@ export const useSkillsData = ({
   const fileTree = fileTreeSlice?.data;
   const fileTreeSha = fileTree?.sha; // Use SHA as stable identity
   const globalSkillsSlice = context.getSlice<GlobalSkillsSlice>('globalSkills');
-  const globalSkills = globalSkillsSlice?.data?.skills || [];
+  const globalSkills = globalSkillsSlice?.data?.skills ?? EMPTY_SKILLS_ARRAY;
+  const globalSkillsCount = globalSkills.length; // Use count as stable primitive
   const repoPath = context.currentScope.repository?.path;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const fileSystem = (context as any).adapters?.fileSystem;
 
+  // Track the last loaded SHA to prevent redundant loads
+  const lastLoadedSha = useRef<string | undefined>(undefined);
+  const lastGlobalSkillsCount = useRef<number>(0);
+
   const loadSkills = useCallback(async () => {
+    // Skip if we've already loaded this exact data
+    if (fileTreeSha === lastLoadedSha.current && globalSkillsCount === lastGlobalSkillsCount.current) {
+      console.log('[useSkillsData] Skipping reload - data unchanged (SHA:', fileTreeSha, 'globalCount:', globalSkillsCount, ')');
+      return;
+    }
+
+    console.log('[useSkillsData] Loading skills - SHA changed:', fileTreeSha !== lastLoadedSha.current, 'globalCount changed:', globalSkillsCount !== lastGlobalSkillsCount.current);
+
     setIsLoading(true);
     setError(null);
 
@@ -298,6 +314,10 @@ export const useSkillsData = ({
       console.log('[useSkillsData] Total skills:', allSkills.length);
 
       setSkills(allSkills);
+
+      // Update tracking refs
+      lastLoadedSha.current = fileTreeSha;
+      lastGlobalSkillsCount.current = globalSkillsCount;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load skills';
       setError(errorMessage);
@@ -305,9 +325,12 @@ export const useSkillsData = ({
     } finally {
       setIsLoading(false);
     }
-  }, [fileTree, fileTreeSha, globalSkills, repoPath, fileSystem]);
+  }, [fileTree, fileTreeSha, globalSkills, globalSkillsCount, repoPath, fileSystem]);
 
   const refreshSkills = useCallback(async () => {
+    // Force reload by clearing the tracking refs
+    lastLoadedSha.current = undefined;
+    lastGlobalSkillsCount.current = -1;
     await loadSkills();
   }, [loadSkills]);
 

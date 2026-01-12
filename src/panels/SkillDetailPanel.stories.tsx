@@ -259,6 +259,25 @@ export const WithSelection: Story = {
       refresh: async () => {},
     });
 
+    // Create wrapper component to handle event emission
+    const SkillDetailWithSelection = (props: any) => {
+      React.useEffect(() => {
+        // Emit the selection event after component mounts
+        const timer = setTimeout(() => {
+          props.events.emit({
+            type: 'skill:selected',
+            source: 'storybook',
+            timestamp: Date.now(),
+            payload: { skillId: '.skills/pdf/SKILL.md' },
+          });
+        }, 0);
+
+        return () => clearTimeout(timer);
+      }, [props.events]);
+
+      return <SkillDetailPanel {...props} />;
+    };
+
     return (
       <MockPanelProvider
         contextOverrides={{
@@ -268,19 +287,7 @@ export const WithSelection: Story = {
           },
         } as any}
       >
-        {(props) => {
-          // Automatically select a skill when component mounts
-          React.useEffect(() => {
-            props.events.emit({
-              type: 'skill:selected',
-              source: 'storybook',
-              timestamp: Date.now(),
-              payload: { skillId: '.skills/pdf/SKILL.md' },
-            });
-          }, []);
-
-          return <SkillDetailPanel {...props} />;
-        }}
+        {(props) => <SkillDetailWithSelection {...props} />}
       </MockPanelProvider>
     );
   },
@@ -317,6 +324,100 @@ export const Loading: Story = {
         } as any}
       >
         {(props) => <SkillDetailPanel {...props} />}
+      </MockPanelProvider>
+    );
+  },
+};
+
+/**
+ * MCP Builder skill selected
+ */
+export const MCPBuilderSelected: Story = {
+  render: () => {
+    const mockSlices = new Map<string, DataSlice>();
+    mockSlices.set('fileTree', {
+      scope: 'repository',
+      name: 'fileTree',
+      data: mockFileTreeWithSkills,
+      loading: false,
+      error: null,
+      refresh: async () => {},
+    });
+
+    const SkillDetailWithSelection = (props: any) => {
+      React.useEffect(() => {
+        const timer = setTimeout(() => {
+          props.events.emit({
+            type: 'skill:selected',
+            source: 'storybook',
+            timestamp: Date.now(),
+            payload: { skillId: '.skills/mcp-builder/SKILL.md' },
+          });
+        }, 0);
+
+        return () => clearTimeout(timer);
+      }, [props.events]);
+
+      return <SkillDetailPanel {...props} />;
+    };
+
+    return (
+      <MockPanelProvider
+        contextOverrides={{
+          slices: mockSlices,
+          adapters: {
+            fileSystem: createMockFileSystemWithSkills(),
+          },
+        } as any}
+      >
+        {(props) => <SkillDetailWithSelection {...props} />}
+      </MockPanelProvider>
+    );
+  },
+};
+
+/**
+ * DOCX skill selected
+ */
+export const DOCXSelected: Story = {
+  render: () => {
+    const mockSlices = new Map<string, DataSlice>();
+    mockSlices.set('fileTree', {
+      scope: 'repository',
+      name: 'fileTree',
+      data: mockFileTreeWithSkills,
+      loading: false,
+      error: null,
+      refresh: async () => {},
+    });
+
+    const SkillDetailWithSelection = (props: any) => {
+      React.useEffect(() => {
+        const timer = setTimeout(() => {
+          props.events.emit({
+            type: 'skill:selected',
+            source: 'storybook',
+            timestamp: Date.now(),
+            payload: { skillId: '.skills/docx/SKILL.md' },
+          });
+        }, 0);
+
+        return () => clearTimeout(timer);
+      }, [props.events]);
+
+      return <SkillDetailPanel {...props} />;
+    };
+
+    return (
+      <MockPanelProvider
+        contextOverrides={{
+          slices: mockSlices,
+          adapters: {
+            fileSystem: createMockFileSystemWithSkills(),
+          },
+        } as any}
+      >
+        {(props) => <SkillDetailWithSelection {...props} />}
       </MockPanelProvider>
     );
   },

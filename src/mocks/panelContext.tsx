@@ -270,14 +270,34 @@ export const createMockEvents = (): PanelEventEmitter => {
  * Wraps components with mock context and ThemeProvider for Storybook
  */
 export const MockPanelProvider: React.FC<{
-  children: (props: PanelComponentProps) => React.ReactNode;
+  children: React.ReactNode | ((props: PanelComponentProps) => React.ReactNode);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   contextOverrides?: any;
   actionsOverrides?: Partial<PanelActions>;
-}> = ({ children, contextOverrides, actionsOverrides }) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  mockSlices?: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  mockAdapters?: any;
+}> = ({ children, contextOverrides, actionsOverrides, mockSlices, mockAdapters }) => {
+  // Convert mockSlices from plain object to Map of DataSlices
+  let slicesMap: Map<string, DataSlice> | undefined;
+  if (mockSlices) {
+    slicesMap = new Map();
+    Object.entries(mockSlices).forEach(([name, data]) => {
+      slicesMap!.set(name, createMockSlice(name, data));
+    });
+  }
+
+  // Merge mockSlices and mockAdapters into contextOverrides
+  const mergedContextOverrides = {
+    ...contextOverrides,
+    ...(slicesMap && { slices: slicesMap }),
+    ...(mockAdapters && { adapters: mockAdapters }),
+  };
+
   // eslint-disable-next-line no-console
-  console.log('[MockPanelProvider] contextOverrides:', contextOverrides);
-  const context = createMockContext(contextOverrides);
+  console.log('[MockPanelProvider] contextOverrides:', mergedContextOverrides);
+  const context = createMockContext(mergedContextOverrides);
   // eslint-disable-next-line no-console
   console.log('[MockPanelProvider] created context:', context);
   // eslint-disable-next-line no-console
@@ -285,5 +305,10 @@ export const MockPanelProvider: React.FC<{
   const actions = createMockActions(actionsOverrides);
   const events = createMockEvents();
 
-  return <ThemeProvider>{children({ context, actions, events })}</ThemeProvider>;
+  // Support both render prop pattern and regular children
+  const content = typeof children === 'function'
+    ? children({ context, actions, events })
+    : children;
+
+  return <ThemeProvider>{content}</ThemeProvider>;
 };

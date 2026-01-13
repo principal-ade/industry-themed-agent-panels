@@ -41,6 +41,8 @@ export interface Skill {
   priority: 1 | 2 | 3 | 4 | 5;  // 1=project-universal, 2=global-universal, 3=project-claude, 4=global-claude, 5=project-other
   // Installation metadata (from .metadata.json)
   metadata?: SkillMetadata;
+  // Frontmatter validation
+  hasFrontmatter: boolean;
 }
 
 // Stable empty array to prevent unnecessary re-renders
@@ -154,6 +156,32 @@ const analyzeSkillStructure = (fileTree: FileTree, skillPath: string) => {
 };
 
 /**
+ * Helper function to detect if content has valid YAML frontmatter
+ */
+const hasFrontmatterYAML = (content: string): boolean => {
+  const trimmedContent = content.trim();
+
+  // Check if content starts with ---
+  if (!trimmedContent.startsWith('---')) {
+    return false;
+  }
+
+  const lines = trimmedContent.split('\n');
+
+  // Find closing ---
+  let frontmatterEnd = -1;
+  for (let i = 1; i < lines.length; i++) {
+    if (lines[i].trim() === '---') {
+      frontmatterEnd = i;
+      break;
+    }
+  }
+
+  // Valid frontmatter must have closing ---
+  return frontmatterEnd > 0;
+};
+
+/**
  * Helper function to parse skill markdown content and extract metadata
  */
 const parseSkillContent = async (
@@ -219,6 +247,9 @@ const parseSkillContent = async (
     }
   }
 
+  // Detect if skill has frontmatter
+  const hasFrontmatter = hasFrontmatterYAML(content);
+
   return {
     id: path,
     name: skillDirName.replace(/-/g, ' ').replace(/_/g, ' '),
@@ -230,6 +261,7 @@ const parseSkillContent = async (
     source,
     priority,
     metadata,
+    hasFrontmatter,
   };
 };
 

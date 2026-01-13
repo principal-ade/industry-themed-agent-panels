@@ -6,7 +6,7 @@ import { SkillMarkdown } from 'themed-markdown';
 import type { ParsedSkill } from '@principal-ade/markdown-utils';
 import { useTheme } from '@principal-ade/industry-theme';
 import { usePanelFocusListener } from '@principal-ade/panel-layouts';
-import { Code, BookOpen, Package } from 'lucide-react';
+import { Code, BookOpen, Package, AlertTriangle } from 'lucide-react';
 import './SkillDetailPanel.css';
 
 export interface SkillDetailPanelProps extends PanelComponentProps {}
@@ -231,6 +231,47 @@ export const SkillDetailPanel: React.FC<SkillDetailPanelProps> = ({
               )}
             </div>
           )}
+
+          {/* Missing frontmatter warning */}
+          {!skill.hasFrontmatter && (
+            <div
+              style={{
+                padding: '1rem',
+                borderBottom: `1px solid ${theme.colors.border}`,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                backgroundColor: '#f59e0b15', // warning amber background
+                borderLeft: '4px solid #f59e0b',
+              }}
+            >
+              <AlertTriangle size={20} color="#f59e0b" />
+              <div style={{ flex: 1 }}>
+                <div
+                  style={{
+                    fontSize: theme.fontSizes[1],
+                    color: '#f59e0b',
+                    fontFamily: theme.fonts.body,
+                    fontWeight: theme.fontWeights.semibold,
+                    marginBottom: '0.25rem',
+                  }}
+                >
+                  Missing YAML Frontmatter
+                </div>
+                <div
+                  style={{
+                    fontSize: theme.fontSizes[0],
+                    color: theme.colors.textSecondary,
+                    fontFamily: theme.fonts.body,
+                    lineHeight: '1.5',
+                  }}
+                >
+                  This skill is missing YAML frontmatter metadata. Skills should have frontmatter (like backlog tasks) to properly define metadata such as name, description, and capabilities.
+                </div>
+              </div>
+            </div>
+          )}
+
           <div style={{ flex: 1, overflow: 'auto' }}>
             <SkillMarkdown
               content={skill.content}

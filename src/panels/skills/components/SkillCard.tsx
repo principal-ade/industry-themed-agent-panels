@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTheme } from '@principal-ade/industry-theme';
-import { Code, BookOpen, Package, Globe, Folder, Github } from 'lucide-react';
+import { Code, BookOpen, Package, Globe, Folder, Github, AlertTriangle } from 'lucide-react';
 import type { Skill, SkillSource } from '../hooks/useSkillsData';
 
 interface SkillCardProps {
@@ -170,6 +170,29 @@ export const SkillCard: React.FC<SkillCardProps> = ({
               >
                 <Github size={10} />
                 <span>{skill.metadata.owner}/{skill.metadata.repo}</span>
+              </div>
+            )}
+
+            {/* Missing frontmatter badge */}
+            {!skill.hasFrontmatter && (
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: '2px 6px',
+                  borderRadius: theme.radii[1],
+                  backgroundColor: '#f59e0b15', // warning amber
+                  border: '1px solid #f59e0b30',
+                  fontSize: theme.fontSizes[0],
+                  color: '#f59e0b',
+                  fontWeight: 500,
+                  width: 'fit-content',
+                }}
+                title="This skill is missing YAML frontmatter metadata"
+              >
+                <AlertTriangle size={10} />
+                <span>No Frontmatter</span>
               </div>
             )}
           </div>

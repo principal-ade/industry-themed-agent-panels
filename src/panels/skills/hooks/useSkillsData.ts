@@ -81,19 +81,30 @@ const determineSkillSource = (path: string): { source: SkillSource; priority: 1 
 
 /**
  * Helper function to find skill markdown files from the FileTree's allFiles array
- * Looks for any .md files in .agent/skills/ or .claude/skills/ directories
+ * Looks for any .md files in .agent/skills/ or .claude/skills/ directories (local mode)
+ * or SKILL.md files anywhere in the tree (browser mode for GitHub repositories)
  */
-const findSkillFiles = (fileTree: FileTree): string[] => {
+const findSkillFiles = (fileTree: FileTree, isBrowserMode: boolean = false): string[] => {
   // Filter allFiles for .md files in skill directories
   const skillFiles = fileTree.allFiles.filter(file => {
     const path = file.relativePath;
     const isMarkdown = file.name.endsWith('.md');
-    const isInSkillDir = path.includes('.agent/skills/') || path.includes('.claude/skills/');
 
     // Exclude metadata files
     const isMetadata = file.name === '.metadata.json' || file.name.startsWith('.');
 
-    return isMarkdown && isInSkillDir && !isMetadata;
+    if (isMetadata) {
+      return false;
+    }
+
+    // In browser mode (GitHub repos), look for SKILL.md files anywhere
+    if (isBrowserMode) {
+      return file.name === 'SKILL.md' || file.name.toLowerCase() === 'skill.md';
+    }
+
+    // In local mode, look for .md files in .agent/skills/ or .claude/skills/
+    const isInSkillDir = path.includes('.agent/skills/') || path.includes('.claude/skills/');
+    return isMarkdown && isInSkillDir;
   });
 
   // Return their relative paths
@@ -188,7 +199,8 @@ const parseSkillContent = async (
   content: string,
   path: string,
   fileTree: FileTree,
-  fileSystemAdapter?: any
+  fileSystemAdapter?: any,
+  isBrowserMode: boolean = false
 ): Promise<Skill> => {
   // Extract skill name from path
   const pathParts = path.split('/');
@@ -233,9 +245,10 @@ const parseSkillContent = async (
   // Determine source and priority
   const { source, priority } = determineSkillSource(path);
 
-  // Try to read .metadata.json if it exists
+  // Try to read .metadata.json if it exists (only in local mode)
+  // In browser mode, metadata files don't exist in remote repositories
   let metadata: SkillMetadata | undefined;
-  if (fileSystemAdapter && structure.skillFolderPath) {
+  if (!isBrowserMode && fileSystemAdapter && structure.skillFolderPath) {
     try {
       const metadataPath = `${structure.skillFolderPath}/.metadata.json`;
       const metadataContent = await fileSystemAdapter.readFile(metadataPath);
@@ -306,15 +319,20 @@ export const useSkillsData = ({
       let localSkills: Skill[] = [];
 
       if (fileTree && fileSystem?.readFile && repoPath) {
+        // Detect browser mode: GitHub repos have paths like "owner/repo" instead of absolute paths
+        const isBrowserMode = !repoPath.startsWith('/');
+
         // eslint-disable-next-line no-console
         console.log('[useSkillsData] fileTree:', fileTree);
         // eslint-disable-next-line no-console
         console.log('[useSkillsData] typeof fileTree:', typeof fileTree);
         // eslint-disable-next-line no-console
         console.log('[useSkillsData] fileTree keys:', Object.keys(fileTree));
+        // eslint-disable-next-line no-console
+        console.log('[useSkillsData] Browser mode:', isBrowserMode);
 
         // Find all SKILL.md files in project
-        const skillPaths = findSkillFiles(fileTree);
+        const skillPaths = findSkillFiles(fileTree, isBrowserMode);
 
         // eslint-disable-next-line no-console
         console.log('[useSkillsData] Found skill paths:', skillPaths);
@@ -322,9 +340,11 @@ export const useSkillsData = ({
         // Read content for each local skill
         const skillPromises = skillPaths.map(async (skillPath) => {
           try {
-            const fullPath = `${repoPath}/${skillPath}`;
+            // In browser mode, use the relative path directly (GitHub adapter expects this)
+            // In local mode, prepend the absolute repo path
+            const fullPath = isBrowserMode ? skillPath : `${repoPath}/${skillPath}`;
             const content = await fileSystem.readFile(fullPath);
-            return parseSkillContent(content as string, skillPath, fileTree, fileSystem);
+            return parseSkillContent(content as string, skillPath, fileTree, fileSystem, isBrowserMode);
           } catch (err) {
             console.error(`Failed to read skill at ${skillPath}:`, err);
             return null;

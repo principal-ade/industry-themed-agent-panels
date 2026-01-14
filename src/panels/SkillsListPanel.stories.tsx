@@ -62,6 +62,31 @@ ${capabilities.map((cap) => `- ${cap}`).join('\n')}
 This skill can be used by AI agents to ${description.toLowerCase()}.
 `;
 
+// Mock SKILL.md content with frontmatter
+const createSkillContentWithFrontmatter = (
+  title: string,
+  description: string,
+  capabilities: string[],
+  extraFrontmatter?: Record<string, any>
+) => `---
+name: ${title}
+description: ${description}
+${extraFrontmatter ? Object.entries(extraFrontmatter).map(([k, v]) => `${k}: ${JSON.stringify(v)}`).join('\n') : ''}
+---
+
+# ${title}
+
+${description}
+
+## Capabilities
+
+${capabilities.map((cap) => `- ${cap}`).join('\n')}
+
+## Usage
+
+This skill can be used by AI agents to ${description.toLowerCase()}.
+`;
+
 // Create mock file tree using PathsFileTreeBuilder
 const builder = new PathsFileTreeBuilder();
 const mockFileTreeWithSkills = builder.build({
@@ -492,6 +517,103 @@ export const BrowseModeNoRepo: Story = {
         } as any}
       >
         {(props) => <SkillsListPanel {...props} browseMode={true} />}
+      </MockPanelProvider>
+    );
+  },
+};
+
+/**
+ * Mix of skills with and without frontmatter
+ * Shows the "No Frontmatter" warning badge on skills missing YAML frontmatter
+ */
+export const FrontmatterMix: Story = {
+  render: () => {
+    const frontmatterMixTree = builder.build({
+      files: [
+        '.agent/skills/code-review/SKILL.md',
+        '.agent/skills/documentation/SKILL.md',
+        '.agent/skills/testing/SKILL.md',
+        '.agent/skills/deployment/SKILL.md',
+        'src/index.ts',
+        'README.md',
+      ],
+      rootPath: '/Users/developer/my-project',
+    });
+
+    const frontmatterMixAdapter = {
+      readFile: async (path: string) => {
+        if (path.includes('code-review')) {
+          return createSkillContentWithFrontmatter(
+            'Code Review',
+            'Performs thorough code reviews with best practices',
+            [
+              'Check code quality and adherence to style guides',
+              'Identify potential bugs and security issues',
+              'Suggest improvements and optimizations',
+            ],
+            { tags: ['review', 'quality', 'testing'], version: '1.0.0' }
+          );
+        }
+        if (path.includes('documentation')) {
+          // No frontmatter - will show warning
+          return createSkillContent(
+            'Documentation Generator',
+            'Generate documentation for your code',
+            [
+              'Generate API documentation from code comments',
+              'Create README files with proper structure',
+              'Add JSDoc comments to functions',
+            ]
+          );
+        }
+        if (path.includes('testing')) {
+          return createSkillContentWithFrontmatter(
+            'Test Generation',
+            'Generates comprehensive unit and integration tests',
+            [
+              'Create unit tests for individual functions',
+              'Generate integration tests for components',
+              'Set up test fixtures and mocks',
+            ],
+            { tags: ['testing', 'quality-assurance'], author: 'Test Team' }
+          );
+        }
+        if (path.includes('deployment')) {
+          // No frontmatter - will show warning
+          return createSkillContent(
+            'Deployment Helper',
+            'Assists with deployment and CI/CD tasks',
+            [
+              'Configure deployment pipelines',
+              'Set up environment variables',
+              'Manage cloud infrastructure',
+            ]
+          );
+        }
+        throw new Error(`File not found: ${path}`);
+      },
+    };
+
+    const mockSlices = new Map<string, DataSlice>();
+    mockSlices.set('fileTree', {
+      scope: 'repository',
+      name: 'fileTree',
+      data: frontmatterMixTree,
+      loading: false,
+      error: null,
+      refresh: async () => {},
+    });
+
+    return (
+      <MockPanelProvider
+        contextOverrides={{
+          slices: mockSlices,
+          adapters: {
+            fileSystem: frontmatterMixAdapter,
+          },
+        } as any}
+      >
+        {(props) => <SkillsListPanel {...props} />}
       </MockPanelProvider>
     );
   },

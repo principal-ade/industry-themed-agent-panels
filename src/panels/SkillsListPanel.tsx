@@ -410,7 +410,7 @@ export const SkillsListPanel: React.FC<SkillsListPanelProps> = ({
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
               gap: '16px',
               padding: '4px',
             }}

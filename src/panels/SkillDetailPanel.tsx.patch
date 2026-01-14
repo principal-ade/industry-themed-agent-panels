@@ -1,0 +1,31 @@
+--- a/src/panels/SkillDetailPanel.tsx
++++ b/src/panels/SkillDetailPanel.tsx
+@@ -43,6 +43,11 @@ export const SkillDetailPanel: React.FC<SkillDetailPanelProps> = ({
+     return unsubscribe;
+   }, [events, selectedSkillIdProp]);
+ 
++  // Debug logging
++  console.log('[SkillDetailPanel] Render:', {
++    selectedSkillIdProp,
++    selectedSkillId,
++    skillsCount: skills.length,
++    isLoading,
++    currentSkill: skill?.name,
++  });
++
+   // Update selected skill when skills load or selection changes
+   useEffect(() => {
++    console.log('[SkillDetailPanel] Effect running:', {
++      selectedSkillId,
++      skillsLength: skills.length,
++      skills: skills.map(s => ({ id: s.id, name: s.name })),
++    });
+     if (selectedSkillId && skills.length > 0) {
+       const foundSkill = skills.find((s) => s.id === selectedSkillId);
++      console.log('[SkillDetailPanel] Found skill:', foundSkill?.name);
+       setSkill(foundSkill || null);
+     } else if (!selectedSkillId) {
++      console.log('[SkillDetailPanel] No selectedSkillId, clearing skill');
+       setSkill(null);
+     }
+   }, [selectedSkillId, skills]);

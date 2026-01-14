@@ -9,18 +9,29 @@ import { usePanelFocusListener } from '@principal-ade/panel-layouts';
 import { Code, BookOpen, Package, AlertTriangle } from 'lucide-react';
 import './SkillDetailPanel.css';
 
-export interface SkillDetailPanelProps extends PanelComponentProps {}
+export interface SkillDetailPanelProps extends PanelComponentProps {
+  /**
+   * Optional skill ID to display.
+   * If provided, this takes precedence over event-based selection.
+   * This allows the host to control panel state via props instead of events.
+   */
+  selectedSkillId?: string | null;
+}
 
 export const SkillDetailPanel: React.FC<SkillDetailPanelProps> = ({
   context,
   events,
   actions,
+  selectedSkillId: selectedSkillIdProp,
 }) => {
   const { theme } = useTheme();
   const { skills, isLoading, error } = useSkillsData({ context });
-  const [selectedSkillId, setSelectedSkillId] = useState<string | null>(null);
+  const [selectedSkillIdState, setSelectedSkillIdState] = useState<string | null>(null);
   const [skill, setSkill] = useState<Skill | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+
+  // Determine the effective selected skill ID (prop takes precedence over state)
+  const selectedSkillId = selectedSkillIdProp !== undefined ? selectedSkillIdProp : selectedSkillIdState;
 
   // Listen for panel focus events
   usePanelFocusListener(
@@ -29,24 +40,31 @@ export const SkillDetailPanel: React.FC<SkillDetailPanelProps> = ({
     () => panelRef.current?.focus()
   );
 
-  // Listen for skill selection events
+  // Listen for skill selection events (only if not controlled by prop)
   useEffect(() => {
+    // If controlled by prop, don't listen to events
+    if (selectedSkillIdProp !== undefined) {
+      return;
+    }
+
     const unsubscribe = events.on('skill:selected', (event) => {
       const payload = event.payload as { skillId?: string } | undefined;
       const skillId = payload?.skillId;
       if (skillId) {
-        setSelectedSkillId(skillId);
+        setSelectedSkillIdState(skillId);
       }
     });
 
     return unsubscribe;
-  }, [events]);
+  }, [events, selectedSkillIdProp]);
 
   // Update selected skill when skills load or selection changes
   useEffect(() => {
     if (selectedSkillId && skills.length > 0) {
       const foundSkill = skills.find((s) => s.id === selectedSkillId);
       setSkill(foundSkill || null);
+    } else if (!selectedSkillId) {
+      setSkill(null);
     }
   }, [selectedSkillId, skills]);
 

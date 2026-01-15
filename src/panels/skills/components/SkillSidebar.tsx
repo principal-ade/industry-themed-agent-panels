@@ -3,12 +3,90 @@
  */
 import { Theme } from '@principal-ade/industry-theme';
 import { type PartialSkillMetadata } from '@principal-ade/markdown-utils';
+import { Globe, Folder, AlertTriangle } from 'lucide-react';
 import React from 'react';
 
 import type { MarkdownHeader } from '../utils/extractHeaders';
+import type { Skill, SkillSource } from '../hooks/useSkillsData';
 import { TableOfContents } from './TableOfContents';
 
 type SidebarTab = 'toc' | 'metadata';
+
+/**
+ * Helper to get source badge configuration
+ */
+const getSourceConfig = (source: SkillSource) => {
+  switch (source) {
+    case 'global-universal':
+      return {
+        label: 'Global',
+        icon: Globe,
+        color: '#7c3aed', // purple
+        bgColor: '#7c3aed15',
+        borderColor: '#7c3aed30',
+      };
+    case 'global-claude':
+      return {
+        label: 'Global Claude',
+        icon: Globe,
+        color: '#0891b2', // cyan
+        bgColor: '#0891b215',
+        borderColor: '#0891b230',
+      };
+    case 'project-universal':
+      return {
+        label: 'Project',
+        icon: Folder,
+        color: '#16a34a', // green
+        bgColor: '#16a34a15',
+        borderColor: '#16a34a30',
+      };
+    case 'project-claude':
+      return {
+        label: 'Project Claude',
+        icon: Folder,
+        color: '#0284c7', // blue
+        bgColor: '#0284c715',
+        borderColor: '#0284c730',
+      };
+    case 'project-other':
+      return {
+        label: 'Project',
+        icon: Folder,
+        color: '#64748b', // slate
+        bgColor: '#64748b15',
+        borderColor: '#64748b30',
+      };
+  }
+};
+
+/**
+ * Convert date string to relative time (e.g., "2 days ago", "3 months ago")
+ */
+const formatRelativeTime = (dateString: string): string => {
+  try {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays < 30) {
+      const weeks = Math.floor(diffDays / 7);
+      return `${weeks} ${weeks === 1 ? 'week' : 'weeks'} ago`;
+    }
+    if (diffDays < 365) {
+      const months = Math.floor(diffDays / 30);
+      return `${months} ${months === 1 ? 'month' : 'months'} ago`;
+    }
+    const years = Math.floor(diffDays / 365);
+    return `${years} ${years === 1 ? 'year' : 'years'} ago`;
+  } catch {
+    return dateString; // Return original string if parsing fails
+  }
+};
 
 export interface SkillSidebarProps {
   /** Array of headers for table of contents */
@@ -21,6 +99,8 @@ export interface SkillSidebarProps {
   className?: string;
   /** Optional callback when a header is clicked */
   onHeaderClick?: (header: MarkdownHeader) => void;
+  /** Optional full skill object for displaying installation locations */
+  skill?: Skill;
 }
 
 /**
@@ -34,13 +114,15 @@ export const SkillSidebar: React.FC<SkillSidebarProps> = ({
   theme,
   className = '',
   onHeaderClick,
+  skill,
 }) => {
   const [activeTab, setActiveTab] = React.useState<SidebarTab>('toc');
 
   const hasMetadata =
     metadata.compatibility ||
     (metadata['allowed-tools'] && metadata['allowed-tools'].length > 0) ||
-    (metadata.metadata && Object.keys(metadata.metadata).length > 0);
+    (metadata.metadata && Object.keys(metadata.metadata).length > 0) ||
+    (skill?.installedLocations && skill.installedLocations.length > 1);
 
   // If no headers, default to metadata tab
   React.useEffect(() => {
@@ -213,7 +295,7 @@ export const SkillSidebar: React.FC<SkillSidebarProps> = ({
             )}
 
             {metadata.metadata && Object.keys(metadata.metadata).length > 0 && (
-              <div>
+              <div style={{ marginBottom: theme.space[3] }}>
                 <div
                   style={{
                     fontFamily: theme.fonts.heading,
@@ -253,6 +335,124 @@ export const SkillSidebar: React.FC<SkillSidebarProps> = ({
                         </div>
                       </div>
                     ))}
+                </div>
+              </div>
+            )}
+
+            {/* Installed Locations section */}
+            {skill?.installedLocations && skill.installedLocations.length > 1 && (
+              <div>
+                <div
+                  style={{
+                    fontFamily: theme.fonts.heading,
+                    fontWeight: 600,
+                    fontSize: theme.fontSizes[0],
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    color: theme.colors.textSecondary,
+                    marginBottom: theme.space[2],
+                  }}
+                >
+                  Installed Locations ({skill.installedLocations.length})
+                </div>
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: theme.space[2],
+                }}>
+                  {skill.installedLocations.map((location, idx) => {
+                    const isPrimary = location.path === skill.path;
+                    const sourceConfig = getSourceConfig(location.source);
+
+                    return (
+                      <div
+                        key={idx}
+                        style={{
+                          padding: theme.space[2],
+                          backgroundColor: isPrimary
+                            ? `${theme.colors.primary}08`
+                            : theme.colors.backgroundSecondary,
+                          borderRadius: '6px',
+                          border: `1px solid ${isPrimary
+                            ? theme.colors.primary + '40'
+                            : theme.colors.border}`,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: theme.space[1],
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: theme.space[2], flexWrap: 'wrap' }}>
+                          {/* Source badge */}
+                          <div
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              padding: '2px 6px',
+                              borderRadius: theme.radii[1],
+                              backgroundColor: sourceConfig.bgColor,
+                              border: `1px solid ${sourceConfig.borderColor}`,
+                              fontSize: theme.fontSizes[0],
+                              color: sourceConfig.color,
+                              fontWeight: 500,
+                            }}
+                          >
+                            <sourceConfig.icon size={10} />
+                            <span>{sourceConfig.label}</span>
+                          </div>
+
+                          {/* Primary indicator */}
+                          {isPrimary && (
+                            <span style={{
+                              fontSize: theme.fontSizes[0],
+                              color: theme.colors.primary,
+                              fontWeight: 600,
+                              fontFamily: theme.fonts.body,
+                            }}>
+                              (Active)
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Path */}
+                        <div style={{
+                          fontSize: theme.fontSizes[0],
+                          color: theme.colors.textSecondary,
+                          fontFamily: theme.fonts.monospace,
+                          wordBreak: 'break-all',
+                        }}>
+                          {location.path}
+                        </div>
+
+                        {/* Metadata info if available */}
+                        {location.metadata?.installedAt && (
+                          <div style={{
+                            fontSize: theme.fontSizes[0],
+                            color: theme.colors.textMuted,
+                            fontFamily: theme.fonts.body,
+                          }}>
+                            Installed: {formatRelativeTime(location.metadata.installedAt)}
+                          </div>
+                        )}
+
+                        {/* SHA if different from primary */}
+                        {location.metadata?.sha && skill.metadata?.sha &&
+                         location.metadata.sha !== skill.metadata.sha && (
+                          <div style={{
+                            fontSize: theme.fontSizes[0],
+                            color: '#f59e0b', // warning color
+                            fontFamily: theme.fonts.monospace,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                          }}>
+                            <AlertTriangle size={10} />
+                            <span>Different version (SHA: {location.metadata.sha.substring(0, 7)})</span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}

@@ -431,125 +431,6 @@ const SkillMetadataSection: React.FC<{
           </div>
         )}
 
-        {/* Installation Locations section */}
-        {skill?.installedLocations && skill.installedLocations.length > 1 && (
-          <div style={{
-            marginTop: theme.space[3],
-            paddingTop: theme.space[3],
-            borderTop: `1px solid ${theme.colors.border}`,
-          }}>
-            <div style={{
-              fontSize: theme.fontSizes[1],
-              fontWeight: 600,
-              color: theme.colors.text,
-              marginBottom: theme.space[2],
-              fontFamily: theme.fonts.heading,
-            }}>
-              Installed Locations ({skill.installedLocations.length})
-            </div>
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: theme.space[2],
-            }}>
-              {skill.installedLocations.map((location, idx) => {
-                const isPrimary = location.path === skill.path;
-                const sourceConfig = getSourceConfig(location.source);
-
-                return (
-                  <div
-                    key={idx}
-                    style={{
-                      padding: theme.space[2],
-                      backgroundColor: isPrimary
-                        ? `${theme.colors.primary}08`
-                        : theme.colors.backgroundSecondary,
-                      borderRadius: '6px',
-                      border: `1px solid ${isPrimary
-                        ? theme.colors.primary + '40'
-                        : theme.colors.border}`,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: theme.space[1],
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: theme.space[2] }}>
-                      {/* Source badge */}
-                      <div
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          padding: '2px 6px',
-                          borderRadius: theme.radii[1],
-                          backgroundColor: sourceConfig.bgColor,
-                          border: `1px solid ${sourceConfig.borderColor}`,
-                          fontSize: theme.fontSizes[0],
-                          color: sourceConfig.color,
-                          fontWeight: 500,
-                        }}
-                      >
-                        <sourceConfig.icon size={10} />
-                        <span>{sourceConfig.label}</span>
-                      </div>
-
-                      {/* Primary indicator */}
-                      {isPrimary && (
-                        <span style={{
-                          fontSize: theme.fontSizes[0],
-                          color: theme.colors.primary,
-                          fontWeight: 600,
-                          fontFamily: theme.fonts.body,
-                        }}>
-                          (Active)
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Path */}
-                    <div style={{
-                      fontSize: theme.fontSizes[0],
-                      color: theme.colors.textSecondary,
-                      fontFamily: theme.fonts.monospace,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}>
-                      {location.path}
-                    </div>
-
-                    {/* Metadata info if available */}
-                    {location.metadata?.installedAt && (
-                      <div style={{
-                        fontSize: theme.fontSizes[0],
-                        color: theme.colors.textMuted,
-                        fontFamily: theme.fonts.body,
-                      }}>
-                        Installed: {formatRelativeTime(location.metadata.installedAt)}
-                      </div>
-                    )}
-
-                    {/* SHA if different from primary */}
-                    {location.metadata?.sha && skill.metadata?.sha &&
-                     location.metadata.sha !== skill.metadata.sha && (
-                      <div style={{
-                        fontSize: theme.fontSizes[0],
-                        color: '#f59e0b', // warning color
-                        fontFamily: theme.fonts.monospace,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                      }}>
-                        <AlertTriangle size={10} />
-                        <span>Different version (SHA: {location.metadata.sha.substring(0, 7)})</span>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
     </div>
   );
 };
@@ -645,6 +526,7 @@ export const SkillMarkdown: React.FC<SkillMarkdownProps> = ({
           headers={headers}
           metadata={parsed.metadata}
           theme={theme}
+          skill={skill}
         />
         <div style={{ flex: 1, overflow: 'auto', padding: theme.space[3], paddingTop: 0 }}>
           <IndustryMarkdownSlide

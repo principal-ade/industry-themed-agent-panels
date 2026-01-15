@@ -21,6 +21,13 @@ export interface SkillMetadata {
   files?: string[];
 }
 
+export interface FrontmatterValidation {
+  isValid: boolean;
+  hasStructure: boolean; // Has --- delimiters
+  missingFields: string[]; // Array of missing required fields
+  errorMessage?: string; // Human-readable error message
+}
+
 export interface Skill {
   id: string;
   name: string;
@@ -42,7 +49,7 @@ export interface Skill {
   // Installation metadata (from .metadata.json)
   metadata?: SkillMetadata;
   // Frontmatter validation
-  hasFrontmatter: boolean;
+  frontmatterValidation: FrontmatterValidation;
 }
 
 // Stable empty array to prevent unnecessary re-renders
@@ -167,14 +174,20 @@ const analyzeSkillStructure = (fileTree: FileTree, skillPath: string) => {
 };
 
 /**
- * Helper function to detect if content has valid YAML frontmatter
+ * Helper function to validate YAML frontmatter structure and required fields
+ * Now validates gracefully - considers skills valid even with missing required fields
  */
-const hasFrontmatterYAML = (content: string): boolean => {
+const validateFrontmatter = (content: string): FrontmatterValidation => {
   const trimmedContent = content.trim();
 
   // Check if content starts with ---
   if (!trimmedContent.startsWith('---')) {
-    return false;
+    return {
+      isValid: true, // Still valid, just has warnings
+      hasStructure: false,
+      missingFields: [],
+      errorMessage: 'Missing YAML frontmatter (must start with ---)',
+    };
   }
 
   const lines = trimmedContent.split('\n');
@@ -189,7 +202,45 @@ const hasFrontmatterYAML = (content: string): boolean => {
   }
 
   // Valid frontmatter must have closing ---
-  return frontmatterEnd > 0;
+  if (frontmatterEnd <= 0) {
+    return {
+      isValid: true, // Still valid, just has warnings
+      hasStructure: false,
+      missingFields: [],
+      errorMessage: 'Missing closing --- delimiter for frontmatter',
+    };
+  }
+
+  // Extract frontmatter content
+  const frontmatterLines = lines.slice(1, frontmatterEnd);
+  const frontmatterText = frontmatterLines.join('\n');
+
+  // Check for required fields: name and description
+  const missingFields: string[] = [];
+
+  const hasName = /^name:\s*.+/m.test(frontmatterText);
+  const hasDescription = /^description:\s*.+/m.test(frontmatterText);
+
+  if (!hasName) {
+    missingFields.push('name');
+  }
+  if (!hasDescription) {
+    missingFields.push('description');
+  }
+
+  // Construct warning message if there are missing fields
+  let errorMessage: string | undefined;
+  if (missingFields.length > 0) {
+    const fieldList = missingFields.map(f => `'${f}'`).join(', ');
+    errorMessage = `Missing required field${missingFields.length > 1 ? 's' : ''}: ${fieldList}`;
+  }
+
+  return {
+    isValid: true, // Always valid - we show warnings but don't block rendering
+    hasStructure: true,
+    missingFields,
+    errorMessage,
+  };
 };
 
 /**
@@ -260,8 +311,8 @@ const parseSkillContent = async (
     }
   }
 
-  // Detect if skill has frontmatter
-  const hasFrontmatter = hasFrontmatterYAML(content);
+  // Validate frontmatter
+  const frontmatterValidation = validateFrontmatter(content);
 
   return {
     id: path,
@@ -274,7 +325,7 @@ const parseSkillContent = async (
     source,
     priority,
     metadata,
-    hasFrontmatter,
+    frontmatterValidation,
   };
 };
 

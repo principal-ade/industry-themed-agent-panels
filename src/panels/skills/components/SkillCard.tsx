@@ -173,8 +173,8 @@ export const SkillCard: React.FC<SkillCardProps> = ({
               </div>
             )}
 
-            {/* Missing frontmatter badge */}
-            {!skill.hasFrontmatter && (
+            {/* Frontmatter validation badge */}
+            {!skill.frontmatterValidation.isValid && (
               <div
                 style={{
                   display: 'inline-flex',
@@ -189,10 +189,16 @@ export const SkillCard: React.FC<SkillCardProps> = ({
                   fontWeight: 500,
                   width: 'fit-content',
                 }}
-                title="This skill is missing YAML frontmatter metadata"
+                title={skill.frontmatterValidation.errorMessage || 'Invalid frontmatter'}
               >
                 <AlertTriangle size={10} />
-                <span>No Frontmatter</span>
+                <span>
+                  {skill.frontmatterValidation.hasStructure
+                    ? skill.frontmatterValidation.missingFields.length > 0
+                      ? `Missing: ${skill.frontmatterValidation.missingFields.join(', ')}`
+                      : 'Invalid Frontmatter'
+                    : 'No Frontmatter'}
+                </span>
               </div>
             )}
           </div>

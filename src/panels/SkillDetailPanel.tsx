@@ -2,11 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import type { PanelComponentProps } from '../types';
 import { useSkillsData } from './skills/hooks/useSkillsData';
 import type { Skill } from './skills/hooks/useSkillsData';
-import { SkillMarkdown } from 'themed-markdown';
-import type { ParsedSkill } from '@principal-ade/markdown-utils';
+import { SkillMarkdown } from './skills/components/SkillMarkdown';
+import type { PartialParsedSkill, ValidationWarning } from '@principal-ade/markdown-utils';
 import { useTheme } from '@principal-ade/industry-theme';
 import { usePanelFocusListener } from '@principal-ade/panel-layouts';
-import { Code, BookOpen, Package, AlertTriangle } from 'lucide-react';
 import './SkillDetailPanel.css';
 
 export interface SkillDetailPanelProps extends PanelComponentProps {
@@ -140,15 +139,16 @@ export const SkillDetailPanel: React.FC<SkillDetailPanelProps> = ({
     );
   }
 
-  const handleParsed = (parsedSkill: ParsedSkill) => {
-    console.log('Skill parsed:', parsedSkill.metadata.name);
+  const handleParsed = (parsedSkill: PartialParsedSkill) => {
+    console.log('Skill parsed:', parsedSkill.metadata.name || '(unnamed)');
+    if (parsedSkill.warnings.length > 0) {
+      console.warn('Skill has warnings:', parsedSkill.warnings);
+    }
   };
 
-  const handleError = (error: Error) => {
-    console.error('Error parsing skill:', error);
+  const handleWarnings = (warnings: ValidationWarning[]) => {
+    console.warn('Skill validation warnings:', warnings);
   };
-
-  const hasStructure = skill.hasScripts || skill.hasReferences || skill.hasAssets;
 
   return (
     <div
@@ -164,139 +164,20 @@ export const SkillDetailPanel: React.FC<SkillDetailPanelProps> = ({
     >
       {skill.content ? (
         <>
-          {hasStructure && (
-            <div
-              style={{
-                padding: '1rem',
-                borderBottom: `1px solid ${theme.colors.border}`,
-                display: 'flex',
-                gap: '0.5rem',
-                flexWrap: 'wrap',
-                backgroundColor: theme.colors.backgroundSecondary,
-              }}
-            >
-              <div
-                style={{
-                  fontSize: theme.fontSizes[1],
-                  color: theme.colors.textSecondary,
-                  fontFamily: theme.fonts.body,
-                  marginRight: '0.5rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                }}
-              >
-                Available:
-              </div>
-              {skill.hasScripts && (
-                <div
-                  style={{
-                    padding: '0.25rem 0.75rem',
-                    borderRadius: '12px',
-                    backgroundColor: theme.colors.primary,
-                    color: theme.colors.background,
-                    fontSize: theme.fontSizes[0],
-                    fontFamily: theme.fonts.body,
-                    fontWeight: 500,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                  }}
-                  title={skill.scriptFiles?.join(', ')}
-                >
-                  <Code size={14} />
-                  <span>Scripts ({skill.scriptFiles?.length || 0})</span>
-                </div>
-              )}
-              {skill.hasReferences && (
-                <div
-                  style={{
-                    padding: '0.25rem 0.75rem',
-                    borderRadius: '12px',
-                    backgroundColor: theme.colors.secondary,
-                    color: theme.colors.background,
-                    fontSize: theme.fontSizes[0],
-                    fontFamily: theme.fonts.body,
-                    fontWeight: 500,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                  }}
-                  title={skill.referenceFiles?.join(', ')}
-                >
-                  <BookOpen size={14} />
-                  <span>References ({skill.referenceFiles?.length || 0})</span>
-                </div>
-              )}
-              {skill.hasAssets && (
-                <div
-                  style={{
-                    padding: '0.25rem 0.75rem',
-                    borderRadius: '12px',
-                    backgroundColor: theme.colors.accent,
-                    color: theme.colors.background,
-                    fontSize: theme.fontSizes[0],
-                    fontFamily: theme.fonts.body,
-                    fontWeight: 500,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                  }}
-                  title={skill.assetFiles?.join(', ')}
-                >
-                  <Package size={14} />
-                  <span>Assets ({skill.assetFiles?.length || 0})</span>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Missing frontmatter warning */}
-          {!skill.hasFrontmatter && (
-            <div
-              style={{
-                padding: '1rem',
-                borderBottom: `1px solid ${theme.colors.border}`,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.75rem',
-                backgroundColor: '#f59e0b15', // warning amber background
-                borderLeft: '4px solid #f59e0b',
-              }}
-            >
-              <AlertTriangle size={20} color="#f59e0b" />
-              <div style={{ flex: 1 }}>
-                <div
-                  style={{
-                    fontSize: theme.fontSizes[1],
-                    color: '#f59e0b',
-                    fontFamily: theme.fonts.body,
-                    fontWeight: theme.fontWeights.semibold,
-                    marginBottom: '0.25rem',
-                  }}
-                >
-                  Missing YAML Frontmatter
-                </div>
-                <div
-                  style={{
-                    fontSize: theme.fontSizes[0],
-                    color: theme.colors.textSecondary,
-                    fontFamily: theme.fonts.body,
-                    lineHeight: '1.5',
-                  }}
-                >
-                  This skill is missing YAML frontmatter metadata. Skills should have frontmatter (like backlog tasks) to properly define metadata such as name, description, and capabilities.
-                </div>
-              </div>
-            </div>
-          )}
-
           <div style={{ flex: 1, overflow: 'auto' }}>
             <SkillMarkdown
               content={skill.content}
               theme={theme}
               onParsed={handleParsed}
-              onError={handleError}
-              showRawOnError={true}
+              onWarnings={handleWarnings}
+              structure={{
+                hasScripts: skill.hasScripts,
+                hasReferences: skill.hasReferences,
+                hasAssets: skill.hasAssets,
+                scriptFiles: skill.scriptFiles,
+                referenceFiles: skill.referenceFiles,
+                assetFiles: skill.assetFiles,
+              }}
             />
           </div>
         </>

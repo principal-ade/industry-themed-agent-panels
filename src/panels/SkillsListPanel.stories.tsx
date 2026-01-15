@@ -618,3 +618,124 @@ export const FrontmatterMix: Story = {
     );
   },
 };
+
+/**
+ * All frontmatter validation scenarios
+ * Shows different validation error messages for various invalid frontmatter cases
+ */
+export const FrontmatterValidation: Story = {
+  render: () => {
+    const validationTree = builder.build({
+      files: [
+        '.agent/skills/valid/SKILL.md',
+        '.agent/skills/missing-name/SKILL.md',
+        '.agent/skills/missing-description/SKILL.md',
+        '.agent/skills/missing-both/SKILL.md',
+        '.agent/skills/no-frontmatter/SKILL.md',
+        'src/index.ts',
+      ],
+      rootPath: '/Users/developer/my-project',
+    });
+
+    const validationAdapter = {
+      readFile: async (path: string) => {
+        if (path.includes('valid/')) {
+          return `---
+name: valid-skill
+description: "A skill with valid frontmatter that has both required fields"
+---
+
+# Valid Skill
+
+This skill has proper frontmatter with both \`name\` and \`description\` fields.
+
+## Features
+- No validation warnings
+- All required fields present
+`;
+        }
+        if (path.includes('missing-name/')) {
+          return `---
+description: "A skill missing the name field"
+version: "1.0.0"
+---
+
+# Missing Name
+
+This skill is missing the required \`name\` field in frontmatter.
+
+## Features
+- Shows "Missing: name" badge
+- Warning message displays in detail panel
+`;
+        }
+        if (path.includes('missing-description/')) {
+          return `---
+name: missing-description
+version: "1.0.0"
+---
+
+# Missing Description
+
+This skill is missing the required \`description\` field in frontmatter.
+
+## Features
+- Shows "Missing: description" badge
+- Warning message displays in detail panel
+`;
+        }
+        if (path.includes('missing-both/')) {
+          return `---
+author: "Developer"
+version: "1.0.0"
+tags: ["example"]
+---
+
+# Missing Both Required Fields
+
+This skill has frontmatter but is missing both \`name\` and \`description\`.
+
+## Features
+- Shows "Missing: name, description" badge
+- Warning about both fields in detail panel
+`;
+        }
+        if (path.includes('no-frontmatter/')) {
+          return `# No Frontmatter
+
+This skill has no YAML frontmatter at all.
+
+## Features
+- Shows "No Frontmatter" badge
+- Warning about missing frontmatter structure
+- The most common validation error
+`;
+        }
+        throw new Error(`File not found: ${path}`);
+      },
+    };
+
+    const mockSlices = new Map<string, DataSlice>();
+    mockSlices.set('fileTree', {
+      scope: 'repository',
+      name: 'fileTree',
+      data: validationTree,
+      loading: false,
+      error: null,
+      refresh: async () => {},
+    });
+
+    return (
+      <MockPanelProvider
+        contextOverrides={{
+          slices: mockSlices,
+          adapters: {
+            fileSystem: validationAdapter,
+          },
+        } as any}
+      >
+        {(props) => <SkillsListPanel {...props} />}
+      </MockPanelProvider>
+    );
+  },
+};

@@ -456,3 +456,276 @@ export const NoRepository: Story = {
     );
   },
 };
+
+// Frontmatter validation examples
+const INVALID_FRONTMATTER_SKILLS = {
+  'missing-name': `---
+description: "A skill that is missing the required name field"
+---
+
+# Missing Name Skill
+
+This skill demonstrates what happens when the \`name\` field is missing from the frontmatter.
+
+## Features
+- This will show a validation warning
+- The error message will say "Missing required field: 'name'"
+`,
+  'missing-description': `---
+name: missing-description
+---
+
+# Missing Description Skill
+
+This skill demonstrates what happens when the \`description\` field is missing from the frontmatter.
+
+## Features
+- This will show a validation warning
+- The error message will say "Missing required field: 'description'"
+`,
+  'missing-both': `---
+author: John Doe
+version: 1.0.0
+---
+
+# Missing Both Fields
+
+This skill demonstrates what happens when both \`name\` and \`description\` fields are missing.
+
+## Features
+- This will show a validation warning
+- The error message will say "Missing required fields: 'name', 'description'"
+`,
+  'no-frontmatter': `# No Frontmatter Skill
+
+This skill demonstrates what happens when there is no frontmatter at all.
+
+## Features
+- This will show a validation warning
+- The error message will say "Missing YAML frontmatter (must start with ---)"
+
+## Usage
+This is just regular markdown content without any frontmatter metadata.
+`,
+};
+
+// Mock file tree with invalid frontmatter skills
+const builderWithInvalid = new PathsFileTreeBuilder();
+const mockFileTreeWithInvalidSkills = builderWithInvalid.build({
+  files: [
+    '.agent/skills/missing-name/SKILL.md',
+    '.agent/skills/missing-description/SKILL.md',
+    '.agent/skills/missing-both/SKILL.md',
+    '.agent/skills/no-frontmatter/SKILL.md',
+    'src/index.ts',
+  ],
+  rootPath: '/Users/developer/my-project',
+});
+
+// Mock file system for invalid frontmatter examples
+const createMockFileSystemWithInvalidSkills = () => {
+  const skillContents: Record<string, string> = {
+    'missing-name/SKILL.md': INVALID_FRONTMATTER_SKILLS['missing-name'],
+    'missing-description/SKILL.md': INVALID_FRONTMATTER_SKILLS['missing-description'],
+    'missing-both/SKILL.md': INVALID_FRONTMATTER_SKILLS['missing-both'],
+    'no-frontmatter/SKILL.md': INVALID_FRONTMATTER_SKILLS['no-frontmatter'],
+  };
+
+  return {
+    readFile: async (path: string) => {
+      const match = path.match(/\.agent\/skills\/([^/]+\/SKILL\.md)$/);
+      if (match && skillContents[match[1]]) {
+        return skillContents[match[1]];
+      }
+      throw new Error(`File not found: ${path}`);
+    },
+  };
+};
+
+/**
+ * Skill with missing name field
+ */
+export const MissingNameField: Story = {
+  render: () => {
+    const mockSlices = new Map<string, DataSlice>();
+    mockSlices.set('fileTree', {
+      scope: 'repository',
+      name: 'fileTree',
+      data: mockFileTreeWithInvalidSkills,
+      loading: false,
+      error: null,
+      refresh: async () => {},
+    });
+
+    const SkillDetailWithSelection = (props: any) => {
+      React.useEffect(() => {
+        const timer = setTimeout(() => {
+          props.events.emit({
+            type: 'skill:selected',
+            source: 'storybook',
+            timestamp: Date.now(),
+            payload: { skillId: '.agent/skills/missing-name/SKILL.md' },
+          });
+        }, 0);
+
+        return () => clearTimeout(timer);
+      }, [props.events]);
+
+      return <SkillDetailPanel {...props} />;
+    };
+
+    return (
+      <MockPanelProvider
+        contextOverrides={{
+          slices: mockSlices,
+          adapters: {
+            fileSystem: createMockFileSystemWithInvalidSkills(),
+          },
+        } as any}
+      >
+        {(props) => <SkillDetailWithSelection {...props} />}
+      </MockPanelProvider>
+    );
+  },
+};
+
+/**
+ * Skill with missing description field
+ */
+export const MissingDescriptionField: Story = {
+  render: () => {
+    const mockSlices = new Map<string, DataSlice>();
+    mockSlices.set('fileTree', {
+      scope: 'repository',
+      name: 'fileTree',
+      data: mockFileTreeWithInvalidSkills,
+      loading: false,
+      error: null,
+      refresh: async () => {},
+    });
+
+    const SkillDetailWithSelection = (props: any) => {
+      React.useEffect(() => {
+        const timer = setTimeout(() => {
+          props.events.emit({
+            type: 'skill:selected',
+            source: 'storybook',
+            timestamp: Date.now(),
+            payload: { skillId: '.agent/skills/missing-description/SKILL.md' },
+          });
+        }, 0);
+
+        return () => clearTimeout(timer);
+      }, [props.events]);
+
+      return <SkillDetailPanel {...props} />;
+    };
+
+    return (
+      <MockPanelProvider
+        contextOverrides={{
+          slices: mockSlices,
+          adapters: {
+            fileSystem: createMockFileSystemWithInvalidSkills(),
+          },
+        } as any}
+      >
+        {(props) => <SkillDetailWithSelection {...props} />}
+      </MockPanelProvider>
+    );
+  },
+};
+
+/**
+ * Skill with both name and description missing
+ */
+export const MissingBothFields: Story = {
+  render: () => {
+    const mockSlices = new Map<string, DataSlice>();
+    mockSlices.set('fileTree', {
+      scope: 'repository',
+      name: 'fileTree',
+      data: mockFileTreeWithInvalidSkills,
+      loading: false,
+      error: null,
+      refresh: async () => {},
+    });
+
+    const SkillDetailWithSelection = (props: any) => {
+      React.useEffect(() => {
+        const timer = setTimeout(() => {
+          props.events.emit({
+            type: 'skill:selected',
+            source: 'storybook',
+            timestamp: Date.now(),
+            payload: { skillId: '.agent/skills/missing-both/SKILL.md' },
+          });
+        }, 0);
+
+        return () => clearTimeout(timer);
+      }, [props.events]);
+
+      return <SkillDetailPanel {...props} />;
+    };
+
+    return (
+      <MockPanelProvider
+        contextOverrides={{
+          slices: mockSlices,
+          adapters: {
+            fileSystem: createMockFileSystemWithInvalidSkills(),
+          },
+        } as any}
+      >
+        {(props) => <SkillDetailWithSelection {...props} />}
+      </MockPanelProvider>
+    );
+  },
+};
+
+/**
+ * Skill with no frontmatter at all
+ */
+export const NoFrontmatter: Story = {
+  render: () => {
+    const mockSlices = new Map<string, DataSlice>();
+    mockSlices.set('fileTree', {
+      scope: 'repository',
+      name: 'fileTree',
+      data: mockFileTreeWithInvalidSkills,
+      loading: false,
+      error: null,
+      refresh: async () => {},
+    });
+
+    const SkillDetailWithSelection = (props: any) => {
+      React.useEffect(() => {
+        const timer = setTimeout(() => {
+          props.events.emit({
+            type: 'skill:selected',
+            source: 'storybook',
+            timestamp: Date.now(),
+            payload: { skillId: '.agent/skills/no-frontmatter/SKILL.md' },
+          });
+        }, 0);
+
+        return () => clearTimeout(timer);
+      }, [props.events]);
+
+      return <SkillDetailPanel {...props} />;
+    };
+
+    return (
+      <MockPanelProvider
+        contextOverrides={{
+          slices: mockSlices,
+          adapters: {
+            fileSystem: createMockFileSystemWithInvalidSkills(),
+          },
+        } as any}
+      >
+        {(props) => <SkillDetailWithSelection {...props} />}
+      </MockPanelProvider>
+    );
+  },
+};

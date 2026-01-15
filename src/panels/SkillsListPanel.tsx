@@ -103,6 +103,18 @@ export const SkillsListPanel: React.FC<SkillsListPanelProps> = ({
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
+
+    // Emit refresh event so parent can handle filesystem rescans, etc.
+    if (events) {
+      events.emit({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        type: 'skills:refresh' as any,
+        source: 'skills-list-panel',
+        timestamp: Date.now(),
+        payload: {},
+      });
+    }
+
     try {
       await refreshSkills();
     } finally {

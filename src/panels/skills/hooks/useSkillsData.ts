@@ -21,6 +21,14 @@ export interface SkillMetadata {
   files?: string[];
 }
 
+export interface SkillInstallation {
+  path: string;
+  source: SkillSource;
+  priority: 1 | 2 | 3 | 4 | 5;
+  skillFolderPath: string;
+  metadata?: SkillMetadata;
+}
+
 export interface FrontmatterValidation {
   isValid: boolean;
   hasStructure: boolean; // Has --- delimiters
@@ -48,6 +56,8 @@ export interface Skill {
   priority: 1 | 2 | 3 | 4 | 5;  // 1=project-universal, 2=global-universal, 3=project-claude, 4=global-claude, 5=project-other
   // Installation metadata (from .metadata.json)
   metadata?: SkillMetadata;
+  // Multiple installation locations (for deduplication)
+  installedLocations?: SkillInstallation[];
   // Frontmatter validation
   frontmatterValidation: FrontmatterValidation;
 }
@@ -330,6 +340,119 @@ const parseSkillContent = async (
 };
 
 /**
+ * Generate a stable deduplication key for a skill
+ * Uses GitHub metadata if available, falls back to normalized name
+ */
+const getDeduplicationKey = (skill: Skill): string => {
+  // Prefer GitHub source metadata for unique identification
+  if (skill.metadata?.owner && skill.metadata?.repo && skill.metadata?.skillPath) {
+    return `github:${skill.metadata.owner}/${skill.metadata.repo}/${skill.metadata.skillPath}`;
+  }
+
+  // Fallback to normalized skill name
+  const normalizedName = skill.name.toLowerCase().replace(/\s+/g, '-');
+  return `name:${normalizedName}`;
+};
+
+/**
+ * Compare two skills to determine which should be the primary installation
+ * Returns true if skill1 should be primary (has higher priority)
+ */
+const comparePriority = (skill1: Skill, skill2: Skill): boolean => {
+  // Lower priority number = higher priority (project-universal = 1 is highest)
+  if (skill1.priority !== skill2.priority) {
+    return skill1.priority < skill2.priority;
+  }
+
+  // Same priority - use installedAt timestamp if available
+  const time1 = skill1.metadata?.installedAt ? new Date(skill1.metadata.installedAt).getTime() : 0;
+  const time2 = skill2.metadata?.installedAt ? new Date(skill2.metadata.installedAt).getTime() : 0;
+
+  // More recent installation wins
+  return time1 > time2;
+};
+
+/**
+ * Create a SkillInstallation object from a Skill
+ */
+const skillToInstallation = (skill: Skill): SkillInstallation => ({
+  path: skill.path,
+  source: skill.source,
+  priority: skill.priority,
+  skillFolderPath: skill.skillFolderPath,
+  metadata: skill.metadata,
+});
+
+/**
+ * Deduplicate skills based on metadata, keeping track of all installation locations
+ * @param skills Array of all skills (local + global)
+ * @param isBrowserMode Whether we're in browser mode (skip deduplication if true)
+ * @returns Deduplicated skills with installedLocations populated
+ */
+const deduplicateSkills = (skills: Skill[], isBrowserMode: boolean = false): Skill[] => {
+  // Skip deduplication in browser mode (no metadata available in remote repos)
+  if (isBrowserMode) {
+    console.log('[useSkillsData] Browser mode detected, skipping deduplication');
+    return skills;
+  }
+
+  if (skills.length === 0) {
+    return skills;
+  }
+
+  // Group skills by deduplication key
+  const skillGroups = new Map<string, Skill[]>();
+
+  for (const skill of skills) {
+    const key = getDeduplicationKey(skill);
+    const group = skillGroups.get(key) || [];
+    group.push(skill);
+    skillGroups.set(key, group);
+  }
+
+  console.log('[useSkillsData] Deduplication found', skillGroups.size, 'unique skills from', skills.length, 'total');
+
+  // For each group, select primary and track all installations
+  const deduplicatedSkills: Skill[] = [];
+
+  for (const [key, group] of skillGroups.entries()) {
+    if (group.length === 1) {
+      // Only one installation, no deduplication needed
+      // Still set installedLocations for consistency
+      deduplicatedSkills.push({
+        ...group[0],
+        installedLocations: [skillToInstallation(group[0])],
+      });
+      continue;
+    }
+
+    // Multiple installations - find primary
+    const sortedByPriority = [...group].sort((a, b) =>
+      comparePriority(a, b) ? -1 : 1
+    );
+
+    const primary = sortedByPriority[0];
+
+    // Create installation records for all locations
+    const installations = group.map(skillToInstallation);
+
+    // Sort installations by priority for consistent display
+    installations.sort((a, b) => a.priority - b.priority);
+
+    console.log('[useSkillsData] Deduplicated skill:', primary.name,
+      'from', group.length, 'installations. Primary:', primary.source);
+
+    // Create deduplicated skill with all installation info
+    deduplicatedSkills.push({
+      ...primary,
+      installedLocations: installations,
+    });
+  }
+
+  return deduplicatedSkills;
+};
+
+/**
  * Hook to discover and read SKILL.md files from the file tree
  */
 export const useSkillsData = ({
@@ -368,10 +491,11 @@ export const useSkillsData = ({
 
     try {
       let localSkills: Skill[] = [];
+      // Detect browser mode: GitHub repos have paths like "owner/repo" instead of absolute paths
+      let isBrowserMode = false;
 
       if (fileTree && fileSystem?.readFile && repoPath) {
-        // Detect browser mode: GitHub repos have paths like "owner/repo" instead of absolute paths
-        const isBrowserMode = !repoPath.startsWith('/');
+        isBrowserMode = !repoPath.startsWith('/');
 
         // eslint-disable-next-line no-console
         console.log('[useSkillsData] fileTree:', fileTree);
@@ -414,9 +538,15 @@ export const useSkillsData = ({
       const allSkills = [...localSkills, ...globalSkills];
 
       // eslint-disable-next-line no-console
-      console.log('[useSkillsData] Total skills:', allSkills.length);
+      console.log('[useSkillsData] Total skills before deduplication:', allSkills.length);
 
-      setSkills(allSkills);
+      // Deduplicate skills based on metadata
+      const deduplicatedSkills = deduplicateSkills(allSkills, isBrowserMode);
+
+      // eslint-disable-next-line no-console
+      console.log('[useSkillsData] Total skills after deduplication:', deduplicatedSkills.length);
+
+      setSkills(deduplicatedSkills);
 
       // Update tracking refs
       lastLoadedSha.current = fileTreeSha;

@@ -178,6 +178,7 @@ export const SkillDetailPanel: React.FC<SkillDetailPanelProps> = ({
                 referenceFiles: skill.referenceFiles,
                 assetFiles: skill.assetFiles,
               }}
+              skill={skill}
             />
           </div>
         </>

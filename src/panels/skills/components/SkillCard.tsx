@@ -58,6 +58,24 @@ const getSourceConfig = (source: SkillSource) => {
 };
 
 /**
+ * Helper to abbreviate source name for compact display
+ */
+const abbreviateSourceName = (source: SkillSource): string => {
+  switch (source) {
+    case 'project-universal':
+      return 'Project';
+    case 'global-universal':
+      return 'Global';
+    case 'project-claude':
+      return 'Project (Claude)';
+    case 'global-claude':
+      return 'Global (Claude)';
+    case 'project-other':
+      return 'Project';
+  }
+};
+
+/**
  * SkillCard - Displays a single skill with its metadata
  */
 export const SkillCard: React.FC<SkillCardProps> = ({
@@ -201,6 +219,43 @@ export const SkillCard: React.FC<SkillCardProps> = ({
                 </span>
               </div>
             )}
+
+            {/* Also installed in badge (multiple locations) */}
+            {skill.installedLocations && skill.installedLocations.length > 1 && (() => {
+              // Get locations other than the primary one
+              const otherLocations = skill.installedLocations
+                .filter(loc => loc.path !== skill.path)
+                .map(loc => abbreviateSourceName(loc.source));
+
+              // Remove duplicates and join
+              const uniqueLocations = Array.from(new Set(otherLocations));
+              const locationText = uniqueLocations.join(', ');
+
+              return (
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: '2px 6px',
+                    borderRadius: theme.radii[1],
+                    backgroundColor: `${theme.colors.accent}15`,
+                    border: `1px solid ${theme.colors.accent}30`,
+                    fontSize: theme.fontSizes[0],
+                    color: theme.colors.accent,
+                    fontWeight: 500,
+                    width: 'fit-content',
+                  }}
+                  title={`Also installed in:\n${skill.installedLocations
+                    .filter(loc => loc.path !== skill.path)
+                    .map(loc => `${abbreviateSourceName(loc.source)}: ${loc.path}`)
+                    .join('\n')}`}
+                >
+                  <Package size={10} />
+                  <span>Also in: {locationText}</span>
+                </div>
+              );
+            })()}
           </div>
         </div>
 

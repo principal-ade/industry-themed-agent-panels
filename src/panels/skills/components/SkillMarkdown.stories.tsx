@@ -685,3 +685,422 @@ export const WithParentResizeObserver: Story = {
     },
   },
 };
+
+const longDocumentContent = `---
+name: comprehensive-guide
+description: A comprehensive guide with many sections to test table of contents
+license: MIT
+compatibility: ">=1.0.0"
+allowed-tools: "Read Write Bash"
+metadata:
+  author: Documentation Team
+  version: "1.0.0"
+  category: Documentation
+  last-updated: "2024-01-15"
+---
+
+# Comprehensive Development Guide
+
+This is a comprehensive guide that covers many topics to demonstrate the table of contents functionality.
+
+## Introduction
+
+Welcome to this comprehensive guide. This document contains many sections and subsections to help you understand how the table of contents works with long documents.
+
+### Purpose
+
+The purpose of this guide is to provide detailed information across multiple topics while demonstrating effective documentation structure.
+
+### Audience
+
+This guide is intended for developers, architects, and anyone interested in understanding best practices.
+
+## Getting Started
+
+Before diving into the details, let's cover the basics.
+
+### Prerequisites
+
+You'll need to have the following installed:
+
+- Node.js 18 or higher
+- npm or yarn package manager
+- Git for version control
+- A code editor (VS Code recommended)
+
+### Installation
+
+Follow these steps to get started:
+
+1. Clone the repository
+2. Install dependencies
+3. Configure your environment
+4. Run the development server
+
+### Quick Start
+
+Here's a quick example to get you up and running immediately.
+
+\`\`\`bash
+npm install
+npm run dev
+\`\`\`
+
+## Architecture Overview
+
+Understanding the architecture is crucial for effective development.
+
+### System Design
+
+The system is built using a modular architecture with clear separation of concerns.
+
+#### Core Components
+
+The core components include:
+
+- Authentication module
+- Data persistence layer
+- API gateway
+- Business logic services
+
+#### Data Flow
+
+Data flows through the system in a unidirectional pattern, ensuring predictability and easier debugging.
+
+### Technology Stack
+
+We use modern technologies to ensure performance and maintainability.
+
+#### Frontend
+
+- React 19 for UI components
+- TypeScript for type safety
+- Vite for fast builds
+
+#### Backend
+
+- Node.js runtime
+- Express.js framework
+- PostgreSQL database
+
+## Development Workflow
+
+Let's explore the recommended development workflow.
+
+### Setting Up Your Environment
+
+Configure your local development environment for optimal productivity.
+
+#### Editor Configuration
+
+Use these recommended settings for your code editor:
+
+- Enable ESLint
+- Configure Prettier
+- Install recommended extensions
+
+#### Environment Variables
+
+Set up your environment variables in a \`.env\` file:
+
+\`\`\`bash
+DATABASE_URL=postgresql://localhost:5432/mydb
+API_KEY=your-api-key-here
+NODE_ENV=development
+\`\`\`
+
+### Writing Code
+
+Follow these guidelines when writing code.
+
+#### Code Style
+
+We follow strict code style guidelines to maintain consistency.
+
+##### Naming Conventions
+
+- Use camelCase for variables and functions
+- Use PascalCase for components and classes
+- Use UPPER_SNAKE_CASE for constants
+
+##### File Organization
+
+Organize your files by feature rather than by type.
+
+#### Best Practices
+
+Follow these best practices for clean, maintainable code:
+
+1. Write self-documenting code
+2. Keep functions small and focused
+3. Avoid premature optimization
+4. Write tests for critical paths
+
+### Testing
+
+Testing is an essential part of our development process.
+
+#### Unit Tests
+
+Write unit tests for individual functions and components.
+
+#### Integration Tests
+
+Integration tests verify that different parts of the system work together correctly.
+
+#### End-to-End Tests
+
+E2E tests simulate real user scenarios.
+
+## API Documentation
+
+Our API follows REST principles and uses JSON for data exchange.
+
+### Authentication
+
+All API requests require authentication using JWT tokens.
+
+#### Obtaining Tokens
+
+Request a token by sending credentials to the \`/auth/login\` endpoint.
+
+#### Token Refresh
+
+Tokens expire after 24 hours and must be refreshed using the refresh endpoint.
+
+### Endpoints
+
+Here are the main API endpoints.
+
+#### Users
+
+Manage user accounts and profiles.
+
+##### GET /api/users
+
+Retrieve a list of users.
+
+##### POST /api/users
+
+Create a new user account.
+
+##### PUT /api/users/:id
+
+Update an existing user.
+
+##### DELETE /api/users/:id
+
+Delete a user account.
+
+#### Projects
+
+Manage projects and associated resources.
+
+##### GET /api/projects
+
+List all projects.
+
+##### POST /api/projects
+
+Create a new project.
+
+## Database Schema
+
+Understanding the database schema is important for data modeling.
+
+### Tables
+
+The database consists of several core tables.
+
+#### Users Table
+
+Stores user account information.
+
+#### Projects Table
+
+Contains project data and metadata.
+
+#### Tasks Table
+
+Manages tasks within projects.
+
+### Relationships
+
+Tables are related through foreign keys and junction tables.
+
+### Indexes
+
+Proper indexing ensures query performance.
+
+## Deployment
+
+Learn how to deploy the application to production.
+
+### Preparation
+
+Before deploying, ensure all tests pass and the build is successful.
+
+### Environments
+
+We maintain three environments:
+
+#### Development
+
+Used for active development and experimentation.
+
+#### Staging
+
+Mirrors production for final testing.
+
+#### Production
+
+The live environment serving real users.
+
+### CI/CD Pipeline
+
+Our continuous integration and deployment pipeline automates the release process.
+
+#### Build Stage
+
+Code is compiled and bundled.
+
+#### Test Stage
+
+All tests are executed automatically.
+
+#### Deploy Stage
+
+Successful builds are deployed to the appropriate environment.
+
+## Monitoring and Logging
+
+Effective monitoring ensures system health and quick issue resolution.
+
+### Application Monitoring
+
+Monitor application performance and errors.
+
+### Infrastructure Monitoring
+
+Track server resources and network performance.
+
+### Log Aggregation
+
+Centralized logging helps with debugging and auditing.
+
+## Security
+
+Security is a top priority in our development process.
+
+### Authentication and Authorization
+
+Implement robust authentication and fine-grained authorization.
+
+### Data Protection
+
+Protect sensitive data both in transit and at rest.
+
+### Vulnerability Management
+
+Regularly scan for and address security vulnerabilities.
+
+## Performance Optimization
+
+Optimize your application for speed and efficiency.
+
+### Frontend Optimization
+
+Improve client-side performance.
+
+#### Code Splitting
+
+Split your code into smaller bundles for faster loading.
+
+#### Lazy Loading
+
+Load components and resources on demand.
+
+#### Caching Strategies
+
+Implement effective caching to reduce server load.
+
+### Backend Optimization
+
+Optimize server-side performance.
+
+#### Database Optimization
+
+Use indexes, query optimization, and connection pooling.
+
+#### API Response Time
+
+Minimize API response times through various techniques.
+
+## Troubleshooting
+
+Common issues and their solutions.
+
+### Common Errors
+
+Learn how to resolve frequently encountered errors.
+
+### Debugging Techniques
+
+Effective debugging strategies for different scenarios.
+
+### Support Resources
+
+Where to get help when you're stuck.
+
+## Contributing
+
+We welcome contributions from the community.
+
+### Code of Conduct
+
+Please follow our code of conduct in all interactions.
+
+### Contribution Guidelines
+
+Review our guidelines before submitting contributions.
+
+### Pull Request Process
+
+Follow this process when submitting pull requests.
+
+## Conclusion
+
+Thank you for reading this comprehensive guide. We hope it helps you in your development journey.
+
+### Next Steps
+
+Continue learning and exploring the codebase.
+
+### Additional Resources
+
+Check out these resources for more information.
+
+### Feedback
+
+We appreciate your feedback to improve this documentation.
+`;
+
+/**
+ * Long document with many headers to test table of contents
+ */
+export const LongDocumentWithTableOfContents: Story = {
+  args: {
+    content: longDocumentContent,
+    theme: defaultTheme,
+    onParsed: fn(),
+    onWarnings: fn(),
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Demonstrates the table of contents feature with a long document containing many headers at various levels. The ToC appears on the left side and allows quick navigation to different sections.',
+      },
+    },
+  },
+};

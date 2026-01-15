@@ -10,10 +10,14 @@ import {
   type PartialSkillMetadata,
   type ValidationWarning,
 } from '@principal-ade/markdown-utils';
-import { Code, BookOpen, Package } from 'lucide-react';
+import { Code, BookOpen, Package, Globe, Folder, AlertTriangle } from 'lucide-react';
 import React from 'react';
 
 import { IndustryMarkdownSlide } from 'themed-markdown';
+
+import type { Skill, SkillSource } from '../hooks/useSkillsData';
+import { extractHeaders, type MarkdownHeader } from '../utils/extractHeaders';
+import { SkillSidebar } from './SkillSidebar';
 
 export interface SkillStructure {
   hasScripts?: boolean;
@@ -41,6 +45,8 @@ export interface SkillMarkdownProps {
   containerWidth?: number;
   /** Optional skill structure information (scripts, references, assets) */
   structure?: SkillStructure;
+  /** Optional full skill object for displaying installation locations */
+  skill?: Skill;
 }
 
 /**
@@ -72,16 +78,66 @@ const formatRelativeTime = (dateString: string): string => {
 };
 
 /**
+ * Helper to get source badge configuration
+ */
+const getSourceConfig = (source: SkillSource) => {
+  switch (source) {
+    case 'global-universal':
+      return {
+        label: 'Global',
+        icon: Globe,
+        color: '#7c3aed', // purple
+        bgColor: '#7c3aed15',
+        borderColor: '#7c3aed30',
+      };
+    case 'global-claude':
+      return {
+        label: 'Global Claude',
+        icon: Globe,
+        color: '#0891b2', // cyan
+        bgColor: '#0891b215',
+        borderColor: '#0891b230',
+      };
+    case 'project-universal':
+      return {
+        label: 'Project',
+        icon: Folder,
+        color: '#16a34a', // green
+        bgColor: '#16a34a15',
+        borderColor: '#16a34a30',
+      };
+    case 'project-claude':
+      return {
+        label: 'Project Claude',
+        icon: Folder,
+        color: '#0284c7', // blue
+        bgColor: '#0284c715',
+        borderColor: '#0284c730',
+      };
+    case 'project-other':
+      return {
+        label: 'Project',
+        icon: Folder,
+        color: '#64748b', // slate
+        bgColor: '#64748b15',
+        borderColor: '#64748b30',
+      };
+  }
+};
+
+/**
  * Render skill metadata section with support for partial metadata
  */
 const SkillMetadataSection: React.FC<{
   metadata: PartialSkillMetadata;
   theme: Theme;
   structure?: SkillStructure;
+  skill?: Skill;
 }> = ({
   metadata,
   theme,
   structure,
+  skill,
 }) => {
   const [expandedSections, setExpandedSections] = React.useState<{
     scripts: boolean;
@@ -374,6 +430,126 @@ const SkillMetadataSection: React.FC<{
             )}
           </div>
         )}
+
+        {/* Installation Locations section */}
+        {skill?.installedLocations && skill.installedLocations.length > 1 && (
+          <div style={{
+            marginTop: theme.space[3],
+            paddingTop: theme.space[3],
+            borderTop: `1px solid ${theme.colors.border}`,
+          }}>
+            <div style={{
+              fontSize: theme.fontSizes[1],
+              fontWeight: 600,
+              color: theme.colors.text,
+              marginBottom: theme.space[2],
+              fontFamily: theme.fonts.heading,
+            }}>
+              Installed Locations ({skill.installedLocations.length})
+            </div>
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: theme.space[2],
+            }}>
+              {skill.installedLocations.map((location, idx) => {
+                const isPrimary = location.path === skill.path;
+                const sourceConfig = getSourceConfig(location.source);
+
+                return (
+                  <div
+                    key={idx}
+                    style={{
+                      padding: theme.space[2],
+                      backgroundColor: isPrimary
+                        ? `${theme.colors.primary}08`
+                        : theme.colors.backgroundSecondary,
+                      borderRadius: '6px',
+                      border: `1px solid ${isPrimary
+                        ? theme.colors.primary + '40'
+                        : theme.colors.border}`,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: theme.space[1],
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: theme.space[2] }}>
+                      {/* Source badge */}
+                      <div
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          padding: '2px 6px',
+                          borderRadius: theme.radii[1],
+                          backgroundColor: sourceConfig.bgColor,
+                          border: `1px solid ${sourceConfig.borderColor}`,
+                          fontSize: theme.fontSizes[0],
+                          color: sourceConfig.color,
+                          fontWeight: 500,
+                        }}
+                      >
+                        <sourceConfig.icon size={10} />
+                        <span>{sourceConfig.label}</span>
+                      </div>
+
+                      {/* Primary indicator */}
+                      {isPrimary && (
+                        <span style={{
+                          fontSize: theme.fontSizes[0],
+                          color: theme.colors.primary,
+                          fontWeight: 600,
+                          fontFamily: theme.fonts.body,
+                        }}>
+                          (Active)
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Path */}
+                    <div style={{
+                      fontSize: theme.fontSizes[0],
+                      color: theme.colors.textSecondary,
+                      fontFamily: theme.fonts.monospace,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}>
+                      {location.path}
+                    </div>
+
+                    {/* Metadata info if available */}
+                    {location.metadata?.installedAt && (
+                      <div style={{
+                        fontSize: theme.fontSizes[0],
+                        color: theme.colors.textMuted,
+                        fontFamily: theme.fonts.body,
+                      }}>
+                        Installed: {formatRelativeTime(location.metadata.installedAt)}
+                      </div>
+                    )}
+
+                    {/* SHA if different from primary */}
+                    {location.metadata?.sha && skill.metadata?.sha &&
+                     location.metadata.sha !== skill.metadata.sha && (
+                      <div style={{
+                        fontSize: theme.fontSizes[0],
+                        color: '#f59e0b', // warning color
+                        fontFamily: theme.fonts.monospace,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                      }}>
+                        <AlertTriangle size={10} />
+                        <span>Different version (SHA: {location.metadata.sha.substring(0, 7)})</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
     </div>
   );
 };
@@ -400,8 +576,10 @@ export const SkillMarkdown: React.FC<SkillMarkdownProps> = ({
   showRawOnError = false,
   containerWidth,
   structure,
+  skill,
 }) => {
   const [parsed, setParsed] = React.useState<PartialParsedSkill | null>(null);
+  const [headers, setHeaders] = React.useState<MarkdownHeader[]>([]);
 
   React.useEffect(() => {
     const skill = parseSkillMarkdownGraceful(content);
@@ -410,6 +588,10 @@ export const SkillMarkdown: React.FC<SkillMarkdownProps> = ({
     if (skill.warnings.length > 0) {
       onWarnings?.(skill.warnings);
     }
+
+    // Extract headers for table of contents
+    const extractedHeaders = extractHeaders(skill.body);
+    setHeaders(extractedHeaders);
   }, [content, onParsed, onWarnings]);
 
   // Safety check for theme
@@ -456,140 +638,23 @@ export const SkillMarkdown: React.FC<SkillMarkdownProps> = ({
       }}
     >
       <div style={{ padding: theme.space[3], paddingBottom: 0 }}>
-        <SkillMetadataSection metadata={parsed.metadata} theme={theme} structure={structure} />
+        <SkillMetadataSection metadata={parsed.metadata} theme={theme} structure={structure} skill={skill} />
       </div>
-      <div style={{ flex: 1, overflow: 'auto', padding: theme.space[3], paddingTop: 0 }}>
-        <div style={{ display: 'flex', gap: theme.space[4], alignItems: 'flex-start' }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <IndustryMarkdownSlide
-              content={parsed.body}
-              theme={theme}
-              slideIdPrefix="skill-body"
-              slideIndex={0}
-              isVisible={true}
-              containerWidth={containerWidth}
-            />
-          </div>
-          {(parsed.metadata.compatibility ||
-            parsed.metadata['allowed-tools'] ||
-            parsed.metadata.metadata) && (
-            <div
-              style={{
-                width: '300px',
-                flexShrink: 0,
-                padding: theme.space[3],
-                background: theme.colors.background,
-                position: 'sticky',
-                top: theme.space[3],
-              }}
-            >
-              {parsed.metadata.compatibility && (
-                <div style={{ marginBottom: theme.space[3] }}>
-                  <div
-                    style={{
-                      fontFamily: theme.fonts.heading,
-                      fontWeight: 600,
-                      fontSize: theme.fontSizes[0],
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                      color: theme.colors.textSecondary,
-                      marginBottom: theme.space[1],
-                    }}
-                  >
-                    Compatibility
-                  </div>
-                  <div style={{ fontSize: theme.fontSizes[1], color: theme.colors.text, fontFamily: theme.fonts.body }}>
-                    {parsed.metadata.compatibility}
-                  </div>
-                </div>
-              )}
-
-              {parsed.metadata['allowed-tools'] && parsed.metadata['allowed-tools'].length > 0 && (
-                <div style={{ marginBottom: theme.space[3] }}>
-                  <div
-                    style={{
-                      fontFamily: theme.fonts.heading,
-                      fontWeight: 600,
-                      fontSize: theme.fontSizes[0],
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                      color: theme.colors.textSecondary,
-                      marginBottom: theme.space[1],
-                    }}
-                  >
-                    Allowed Tools
-                  </div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: theme.space[1] }}>
-                    {parsed.metadata['allowed-tools'].map((tool, index) => (
-                      <span
-                        key={index}
-                        style={{
-                          display: 'inline-block',
-                          paddingTop: theme.space[2],
-                          paddingBottom: theme.space[2],
-                          paddingLeft: theme.space[3],
-                          paddingRight: theme.space[3],
-                          background: theme.colors.primary,
-                          color: theme.colors.background,
-                          borderRadius: '4px',
-                          fontSize: theme.fontSizes[0],
-                          fontWeight: 500,
-                          fontFamily: theme.fonts.monospace,
-                        }}
-                      >
-                        {tool}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {parsed.metadata.metadata && Object.keys(parsed.metadata.metadata).length > 0 && (
-                <div>
-                  <div
-                    style={{
-                      fontFamily: theme.fonts.heading,
-                      fontWeight: 600,
-                      fontSize: theme.fontSizes[0],
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                      color: theme.colors.textSecondary,
-                      marginBottom: theme.space[1],
-                    }}
-                  >
-                    Metadata
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: theme.space[1] }}>
-                    {Object.entries(parsed.metadata.metadata)
-                      .filter(([key]) => key !== 'last-updated')
-                      .map(([key, value]) => (
-                        <div key={key}>
-                          <div
-                            style={{
-                              fontSize: theme.fontSizes[0],
-                              fontWeight: 600,
-                              color: theme.colors.textSecondary,
-                              fontFamily: theme.fonts.body,
-                            }}
-                          >
-                            {key}:
-                          </div>
-                          <div
-                            style={{
-                              fontSize: theme.fontSizes[1],
-                              color: theme.colors.text,
-                              fontFamily: theme.fonts.monospace,
-                            }}
-                          >
-                            {value}
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+        <SkillSidebar
+          headers={headers}
+          metadata={parsed.metadata}
+          theme={theme}
+        />
+        <div style={{ flex: 1, overflow: 'auto', padding: theme.space[3], paddingTop: 0 }}>
+          <IndustryMarkdownSlide
+            content={parsed.body}
+            theme={theme}
+            slideIdPrefix="skill-body"
+            slideIndex={0}
+            isVisible={true}
+            containerWidth={containerWidth}
+          />
         </div>
       </div>
     </div>

@@ -739,3 +739,450 @@ This skill has no YAML frontmatter at all.
     );
   },
 };
+
+/**
+ * Duplicate skills - shows deduplication in action
+ * Same skill installed in both project and global locations
+ */
+export const DuplicateSkills: Story = {
+  render: () => {
+    // Project skills with metadata
+    const duplicateSkillsTree = builder.build({
+      files: [
+        '.agent/skills/legal-review/SKILL.md',
+        '.agent/skills/legal-review/.metadata.json',
+        '.agent/skills/code-reviewer/SKILL.md',
+        '.agent/skills/code-reviewer/.metadata.json',
+        'src/index.ts',
+      ],
+      rootPath: '/Users/developer/my-project',
+    });
+
+    const duplicateSkillsAdapter = {
+      readFile: async (path: string) => {
+        if (path.includes('legal-review/SKILL.md')) {
+          return createSkillContentWithFrontmatter(
+            'Legal Review',
+            'Review contracts and legal documents for potential issues and compliance',
+            [
+              'Identify contractual obligations and liabilities',
+              'Check for regulatory compliance',
+              'Flag ambiguous or problematic clauses',
+            ]
+          );
+        }
+        if (path.includes('legal-review/.metadata.json')) {
+          return JSON.stringify({
+            owner: 'skills-org',
+            repo: 'legal-skills',
+            skillPath: 'legal-review',
+            sha: 'abc123def456',
+            installedFrom: 'https://github.com/skills-org/legal-skills',
+            installedAt: '2024-01-15T10:30:00Z',
+            destination: 'project-universal',
+          });
+        }
+        if (path.includes('code-reviewer/SKILL.md')) {
+          return createSkillContentWithFrontmatter(
+            'Code Reviewer',
+            'Review code for quality, security, and best practices',
+            [
+              'Identify potential bugs and security vulnerabilities',
+              'Suggest performance improvements',
+              'Check adherence to coding standards',
+            ]
+          );
+        }
+        if (path.includes('code-reviewer/.metadata.json')) {
+          return JSON.stringify({
+            owner: 'skills-org',
+            repo: 'dev-skills',
+            skillPath: 'code-reviewer',
+            sha: 'xyz789abc123',
+            installedFrom: 'https://github.com/skills-org/dev-skills',
+            installedAt: '2024-01-10T14:20:00Z',
+            destination: 'project-universal',
+          });
+        }
+        throw new Error(`File not found: ${path}`);
+      },
+    };
+
+    // Mock global skills with SAME metadata (will be deduplicated)
+    const mockGlobalSkills = [
+      {
+        id: '/Users/developer/.agent/skills/legal-review/SKILL.md',
+        name: 'legal review',
+        path: '/Users/developer/.agent/skills/legal-review/SKILL.md',
+        description: 'Review contracts and legal documents for potential issues and compliance',
+        skillFolderPath: '/Users/developer/.agent/skills/legal-review',
+        source: 'global-universal' as const,
+        priority: 2 as const,
+        hasScripts: false,
+        hasReferences: false,
+        hasAssets: false,
+        content: createSkillContentWithFrontmatter(
+          'Legal Review',
+          'Review contracts and legal documents for potential issues and compliance',
+          [
+            'Identify contractual obligations and liabilities',
+            'Check for regulatory compliance',
+            'Flag ambiguous or problematic clauses',
+          ]
+        ),
+        metadata: {
+          owner: 'skills-org',
+          repo: 'legal-skills',
+          skillPath: 'legal-review',
+          sha: 'abc123def456', // Same SHA as project version
+          installedFrom: 'https://github.com/skills-org/legal-skills',
+          installedAt: '2024-01-01T08:00:00Z', // Older installation
+          destination: 'global-universal',
+        },
+        frontmatterValidation: {
+          isValid: true,
+          hasStructure: true,
+          missingFields: [],
+        },
+      },
+      {
+        id: '/Users/developer/.claude/skills/code-reviewer/SKILL.md',
+        name: 'code reviewer',
+        path: '/Users/developer/.claude/skills/code-reviewer/SKILL.md',
+        description: 'Review code for quality, security, and best practices',
+        skillFolderPath: '/Users/developer/.claude/skills/code-reviewer',
+        source: 'global-claude' as const,
+        priority: 4 as const,
+        hasScripts: false,
+        hasReferences: false,
+        hasAssets: false,
+        content: createSkillContentWithFrontmatter(
+          'Code Reviewer',
+          'Review code for quality, security, and best practices',
+          [
+            'Identify potential bugs and security vulnerabilities',
+            'Suggest performance improvements',
+            'Check adherence to coding standards',
+          ]
+        ),
+        metadata: {
+          owner: 'skills-org',
+          repo: 'dev-skills',
+          skillPath: 'code-reviewer',
+          sha: 'xyz789abc123', // Same SHA
+          installedFrom: 'https://github.com/skills-org/dev-skills',
+          installedAt: '2023-12-20T16:45:00Z', // Even older
+          destination: 'global-claude',
+        },
+        frontmatterValidation: {
+          isValid: true,
+          hasStructure: true,
+          missingFields: [],
+        },
+      },
+    ];
+
+    const mockSlices = new Map<string, DataSlice>();
+    mockSlices.set('fileTree', {
+      scope: 'repository',
+      name: 'fileTree',
+      data: duplicateSkillsTree,
+      loading: false,
+      error: null,
+      refresh: async () => {},
+    });
+
+    mockSlices.set('globalSkills', {
+      scope: 'workspace',
+      name: 'globalSkills',
+      data: { skills: mockGlobalSkills },
+      loading: false,
+      error: null,
+      refresh: async () => {},
+    });
+
+    return (
+      <MockPanelProvider
+        contextOverrides={{
+          slices: mockSlices,
+          adapters: {
+            fileSystem: duplicateSkillsAdapter,
+          },
+        } as any}
+      >
+        {(props) => <SkillsListPanel {...props} />}
+      </MockPanelProvider>
+    );
+  },
+};
+
+/**
+ * Duplicate skills with SHA mismatch - different versions
+ * Shows version warning when same skill has different SHAs
+ */
+export const DuplicateWithSHAMismatch: Story = {
+  render: () => {
+    const singleSkillTree = builder.build({
+      files: [
+        '.agent/skills/data-analysis/SKILL.md',
+        '.agent/skills/data-analysis/.metadata.json',
+        'src/index.ts',
+      ],
+      rootPath: '/Users/developer/my-project',
+    });
+
+    const shaAdapter = {
+      readFile: async (path: string) => {
+        if (path.includes('data-analysis/SKILL.md')) {
+          return createSkillContentWithFrontmatter(
+            'Data Analysis',
+            'Analyze datasets to extract insights and generate visualizations (v2.0)',
+            [
+              'Statistical analysis and trend identification',
+              'Data cleaning and preprocessing',
+              'Generate charts and visualizations',
+              'NEW: Machine learning predictions',
+            ]
+          );
+        }
+        if (path.includes('data-analysis/.metadata.json')) {
+          return JSON.stringify({
+            owner: 'analytics',
+            repo: 'data-tools',
+            skillPath: 'data-analysis',
+            sha: 'new_version_456', // NEW version
+            installedFrom: 'https://github.com/analytics/data-tools',
+            installedAt: '2024-02-01T12:00:00Z',
+            destination: 'project-universal',
+          });
+        }
+        throw new Error(`File not found: ${path}`);
+      },
+    };
+
+    // Global version with DIFFERENT SHA (older version)
+    const mockGlobalSkills = [
+      {
+        id: '/Users/developer/.agent/skills/data-analysis/SKILL.md',
+        name: 'data analysis',
+        path: '/Users/developer/.agent/skills/data-analysis/SKILL.md',
+        description: 'Analyze datasets to extract insights and generate visualizations (v1.0)',
+        skillFolderPath: '/Users/developer/.agent/skills/data-analysis',
+        source: 'global-universal' as const,
+        priority: 2 as const,
+        hasScripts: false,
+        hasReferences: false,
+        hasAssets: false,
+        content: createSkillContentWithFrontmatter(
+          'Data Analysis',
+          'Analyze datasets to extract insights and generate visualizations (v1.0)',
+          [
+            'Statistical analysis and trend identification',
+            'Data cleaning and preprocessing',
+            'Generate charts and visualizations',
+          ]
+        ),
+        metadata: {
+          owner: 'analytics',
+          repo: 'data-tools',
+          skillPath: 'data-analysis',
+          sha: 'old_version_123', // OLD version - different SHA!
+          installedFrom: 'https://github.com/analytics/data-tools',
+          installedAt: '2023-11-15T09:30:00Z',
+          destination: 'global-universal',
+        },
+        frontmatterValidation: {
+          isValid: true,
+          hasStructure: true,
+          missingFields: [],
+        },
+      },
+    ];
+
+    const mockSlices = new Map<string, DataSlice>();
+    mockSlices.set('fileTree', {
+      scope: 'repository',
+      name: 'fileTree',
+      data: singleSkillTree,
+      loading: false,
+      error: null,
+      refresh: async () => {},
+    });
+
+    mockSlices.set('globalSkills', {
+      scope: 'workspace',
+      name: 'globalSkills',
+      data: { skills: mockGlobalSkills },
+      loading: false,
+      error: null,
+      refresh: async () => {},
+    });
+
+    return (
+      <MockPanelProvider
+        contextOverrides={{
+          slices: mockSlices,
+          adapters: {
+            fileSystem: shaAdapter,
+          },
+        } as any}
+      >
+        {(props) => <SkillsListPanel {...props} />}
+      </MockPanelProvider>
+    );
+  },
+};
+
+/**
+ * Skill in multiple locations - 3+ installations
+ * Shows "Also in:" with multiple location names
+ */
+export const MultipleLocations: Story = {
+  render: () => {
+    const multiLocationTree = builder.build({
+      files: [
+        '.agent/skills/test-generator/SKILL.md',
+        '.agent/skills/test-generator/.metadata.json',
+        '.claude/skills/test-generator/SKILL.md',
+        '.claude/skills/test-generator/.metadata.json',
+        'src/index.ts',
+      ],
+      rootPath: '/Users/developer/my-project',
+    });
+
+    const multiAdapter = {
+      readFile: async (path: string) => {
+        if (path.includes('test-generator/SKILL.md')) {
+          return createSkillContentWithFrontmatter(
+            'Test Generator',
+            'Generates comprehensive unit and integration tests',
+            [
+              'Create unit tests for individual functions',
+              'Generate integration tests for components',
+              'Set up test fixtures and mocks',
+            ]
+          );
+        }
+        if (path.includes('.metadata.json')) {
+          const isAgent = path.includes('.agent');
+          return JSON.stringify({
+            owner: 'testing',
+            repo: 'test-tools',
+            skillPath: 'test-generator',
+            sha: 'test123abc',
+            installedFrom: 'https://github.com/testing/test-tools',
+            installedAt: isAgent ? '2024-01-25T11:00:00Z' : '2024-01-20T15:30:00Z',
+            destination: isAgent ? 'project-universal' : 'project-claude',
+          });
+        }
+        throw new Error(`File not found: ${path}`);
+      },
+    };
+
+    // Two more global installations
+    const mockGlobalSkills = [
+      {
+        id: '/Users/developer/.agent/skills/test-generator/SKILL.md',
+        name: 'test generator',
+        path: '/Users/developer/.agent/skills/test-generator/SKILL.md',
+        description: 'Generates comprehensive unit and integration tests',
+        skillFolderPath: '/Users/developer/.agent/skills/test-generator',
+        source: 'global-universal' as const,
+        priority: 2 as const,
+        hasScripts: false,
+        hasReferences: false,
+        hasAssets: false,
+        content: createSkillContentWithFrontmatter(
+          'Test Generator',
+          'Generates comprehensive unit and integration tests',
+          [
+            'Create unit tests for individual functions',
+            'Generate integration tests for components',
+            'Set up test fixtures and mocks',
+          ]
+        ),
+        metadata: {
+          owner: 'testing',
+          repo: 'test-tools',
+          skillPath: 'test-generator',
+          sha: 'test123abc',
+          installedFrom: 'https://github.com/testing/test-tools',
+          installedAt: '2024-01-10T08:00:00Z',
+          destination: 'global-universal',
+        },
+        frontmatterValidation: {
+          isValid: true,
+          hasStructure: true,
+          missingFields: [],
+        },
+      },
+      {
+        id: '/Users/developer/.claude/skills/test-generator/SKILL.md',
+        name: 'test generator',
+        path: '/Users/developer/.claude/skills/test-generator/SKILL.md',
+        description: 'Generates comprehensive unit and integration tests',
+        skillFolderPath: '/Users/developer/.claude/skills/test-generator',
+        source: 'global-claude' as const,
+        priority: 4 as const,
+        hasScripts: false,
+        hasReferences: false,
+        hasAssets: false,
+        content: createSkillContentWithFrontmatter(
+          'Test Generator',
+          'Generates comprehensive unit and integration tests',
+          [
+            'Create unit tests for individual functions',
+            'Generate integration tests for components',
+            'Set up test fixtures and mocks',
+          ]
+        ),
+        metadata: {
+          owner: 'testing',
+          repo: 'test-tools',
+          skillPath: 'test-generator',
+          sha: 'test123abc',
+          installedFrom: 'https://github.com/testing/test-tools',
+          installedAt: '2024-01-05T14:20:00Z',
+          destination: 'global-claude',
+        },
+        frontmatterValidation: {
+          isValid: true,
+          hasStructure: true,
+          missingFields: [],
+        },
+      },
+    ];
+
+    const mockSlices = new Map<string, DataSlice>();
+    mockSlices.set('fileTree', {
+      scope: 'repository',
+      name: 'fileTree',
+      data: multiLocationTree,
+      loading: false,
+      error: null,
+      refresh: async () => {},
+    });
+
+    mockSlices.set('globalSkills', {
+      scope: 'workspace',
+      name: 'globalSkills',
+      data: { skills: mockGlobalSkills },
+      loading: false,
+      error: null,
+      refresh: async () => {},
+    });
+
+    return (
+      <MockPanelProvider
+        contextOverrides={{
+          slices: mockSlices,
+          adapters: {
+            fileSystem: multiAdapter,
+          },
+        } as any}
+      >
+        {(props) => <SkillsListPanel {...props} />}
+      </MockPanelProvider>
+    );
+  },
+};

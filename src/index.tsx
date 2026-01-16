@@ -1,11 +1,12 @@
 import { SkillsListPanel, type SkillsListPanelProps } from './panels/SkillsListPanel';
-import { SkillDetailPanel } from './panels/SkillDetailPanel';
+import { SkillDetailPanel, type SkillDetailPanelProps } from './panels/SkillDetailPanel';
 import { AgentsListPanel } from './panels/AgentsListPanel';
 import { AgentDetailPanel } from './panels/AgentDetailPanel';
 import type { PanelDefinition, PanelContextValue } from './types';
+import type { Skill } from './panels/skills/hooks/useSkillsData';
 
 // Export component props types for external use
-export type { SkillsListPanelProps };
+export type { SkillsListPanelProps, SkillDetailPanelProps, Skill };
 
 /**
  * Export array of panel definitions.

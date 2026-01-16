@@ -15,6 +15,12 @@ export interface SkillDetailPanelProps extends PanelComponentProps {
    * This allows the host to control panel state via props instead of events.
    */
   selectedSkillId?: string | null;
+  /**
+   * Optional skill object to display.
+   * If provided, bypasses useSkillsData loading for instant display.
+   * This provides better performance when the skill data is already available.
+   */
+  skill?: Skill | null;
 }
 
 export const SkillDetailPanel: React.FC<SkillDetailPanelProps> = ({
@@ -22,15 +28,19 @@ export const SkillDetailPanel: React.FC<SkillDetailPanelProps> = ({
   events,
   actions,
   selectedSkillId: selectedSkillIdProp,
+  skill: skillProp,
 }) => {
   const { theme } = useTheme();
   const { skills, isLoading, error } = useSkillsData({ context });
   const [selectedSkillIdState, setSelectedSkillIdState] = useState<string | null>(null);
-  const [skill, setSkill] = useState<Skill | null>(null);
+  const [skillState, setSkillState] = useState<Skill | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
   // Determine the effective selected skill ID (prop takes precedence over state)
   const selectedSkillId = selectedSkillIdProp !== undefined ? selectedSkillIdProp : selectedSkillIdState;
+
+  // Use skill from prop if provided, otherwise use state
+  const skill = skillProp !== undefined ? skillProp : skillState;
 
   // Listen for panel focus events
   usePanelFocusListener(
@@ -58,14 +68,20 @@ export const SkillDetailPanel: React.FC<SkillDetailPanelProps> = ({
   }, [events, selectedSkillIdProp]);
 
   // Update selected skill when skills load or selection changes
+  // Only runs when skill is NOT provided via prop
   useEffect(() => {
+    // If skill is provided via prop, don't override it
+    if (skillProp !== undefined) {
+      return;
+    }
+
     if (selectedSkillId && skills.length > 0) {
       const foundSkill = skills.find((s) => s.id === selectedSkillId);
-      setSkill(foundSkill || null);
+      setSkillState(foundSkill || null);
     } else if (!selectedSkillId) {
-      setSkill(null);
+      setSkillState(null);
     }
-  }, [selectedSkillId, skills]);
+  }, [selectedSkillId, skills, skillProp]);
 
   if (error) {
     return (

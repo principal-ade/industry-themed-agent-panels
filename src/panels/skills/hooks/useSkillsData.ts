@@ -91,6 +91,9 @@ const determineSkillSource = (path: string): { source: SkillSource; priority: 1 
     return { source: 'project-universal', priority: 1 };
   } else if (path.includes('.claude/skills/')) {
     return { source: 'project-claude', priority: 3 };
+  } else if (path.includes('skills/')) {
+    // Treat top-level skills/ directory same as .agent/skills/ (priority 1)
+    return { source: 'project-other', priority: 1 };
   } else {
     return { source: 'project-other', priority: 5 };
   }
@@ -119,8 +122,8 @@ const findSkillFiles = (fileTree: FileTree, isBrowserMode: boolean = false): str
       return file.name === 'SKILL.md' || file.name.toLowerCase() === 'skill.md';
     }
 
-    // In local mode, look for .md files in .agent/skills/ or .claude/skills/
-    const isInSkillDir = path.includes('.agent/skills/') || path.includes('.claude/skills/');
+    // In local mode, look for .md files in .agent/skills/, .claude/skills/, or skills/
+    const isInSkillDir = path.includes('.agent/skills/') || path.includes('.claude/skills/') || path.includes('skills/');
     return isMarkdown && isInSkillDir;
   });
 

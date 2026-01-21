@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useTheme } from '@principal-ade/industry-theme';
 import { usePanelFocusListener } from '@principal-ade/panel-layouts';
 import { AlertCircle, Search, X, RefreshCw, FileCode } from 'lucide-react';
@@ -6,6 +6,7 @@ import type { PanelComponentProps } from '../types';
 import { useSkillsData, type Skill } from './skills/hooks/useSkillsData';
 import { SkillCard } from './skills/components/SkillCard';
 
+// Testing FileTree timestamp detection
 type SkillFilter = 'all' | 'project' | 'global';
 
 export interface SkillsListPanelProps extends PanelComponentProps {
@@ -42,6 +43,24 @@ export const SkillsListPanel: React.FC<SkillsListPanelProps> = ({
 
   // Listen for panel focus events
   usePanelFocusListener('skills-list', events, () => panelRef.current?.focus());
+
+  // Listen for skill installation/uninstallation events to refresh the list
+  useEffect(() => {
+    const unsubscribeInstalled = events.on('skill:installed', () => {
+      console.log('[SkillsListPanel] Skill installed, refreshing...');
+      refreshSkills();
+    });
+
+    const unsubscribeUninstalled = events.on('skill:uninstalled', () => {
+      console.log('[SkillsListPanel] Skill uninstalled, refreshing...');
+      refreshSkills();
+    });
+
+    return () => {
+      unsubscribeInstalled();
+      unsubscribeUninstalled();
+    };
+  }, [events, refreshSkills]);
 
   // Check if there's a repository loaded (to determine if filters should be shown)
   const hasRepository = useMemo(() => {

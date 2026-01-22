@@ -10,7 +10,7 @@ import {
   type PartialSkillMetadata,
   type ValidationWarning,
 } from '@principal-ade/markdown-utils';
-import { Code, BookOpen, Package, Globe, Folder, AlertTriangle } from 'lucide-react';
+import { Code, BookOpen, Package, Globe, Folder, AlertTriangle, Search, X, ChevronUp, ChevronDown, ExternalLink, FileEdit } from 'lucide-react';
 import React from 'react';
 
 import { IndustryMarkdownSlide } from 'themed-markdown';
@@ -18,6 +18,7 @@ import { IndustryMarkdownSlide } from 'themed-markdown';
 import type { Skill, SkillSource } from '../hooks/useSkillsData';
 import { extractHeaders, type MarkdownHeader } from '../utils/extractHeaders';
 import { SkillSidebar } from './SkillSidebar';
+import type { PanelActions } from '../../../types';
 
 export interface SkillStructure {
   hasScripts?: boolean;
@@ -47,6 +48,8 @@ export interface SkillMarkdownProps {
   structure?: SkillStructure;
   /** Optional full skill object for displaying installation locations */
   skill?: Skill;
+  /** Optional panel actions for file operations */
+  actions?: PanelActions;
 }
 
 /**
@@ -126,6 +129,119 @@ const getSourceConfig = (source: SkillSource) => {
 };
 
 /**
+ * Search bar component for finding text in markdown
+ */
+const SearchBar: React.FC<{
+  theme: Theme;
+  searchQuery: string;
+  onSearchChange: (query: string) => void;
+  currentMatch: number;
+  totalMatches: number;
+  onPrevious: () => void;
+  onNext: () => void;
+  onClose: () => void;
+}> = ({ theme, searchQuery, onSearchChange, currentMatch, totalMatches, onPrevious, onNext, onClose }) => {
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => {
+    // Focus input when component mounts
+    inputRef.current?.focus();
+  }, []);
+
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.space[2],
+      padding: theme.space[2],
+      backgroundColor: theme.colors.backgroundSecondary,
+      borderBottom: `1px solid ${theme.colors.border}`,
+    }}>
+      <Search size={16} color={theme.colors.textSecondary} />
+      <input
+        ref={inputRef}
+        type="text"
+        placeholder="Find in skill..."
+        value={searchQuery}
+        onChange={(e) => onSearchChange(e.target.value)}
+        style={{
+          flex: 1,
+          padding: '0.375rem 0.75rem',
+          fontSize: theme.fontSizes[2],
+          fontFamily: theme.fonts.body,
+          color: theme.colors.text,
+          backgroundColor: theme.colors.background,
+          border: `1px solid ${theme.colors.border}`,
+          borderRadius: '6px',
+          outline: 'none',
+        }}
+        onFocus={(e) => e.currentTarget.style.borderColor = theme.colors.primary}
+        onBlur={(e) => e.currentTarget.style.borderColor = theme.colors.border}
+      />
+      {totalMatches > 0 && (
+        <span style={{
+          fontSize: theme.fontSizes[1],
+          color: theme.colors.textSecondary,
+          fontFamily: theme.fonts.monospace,
+          whiteSpace: 'nowrap',
+        }}>
+          {currentMatch + 1} / {totalMatches}
+        </span>
+      )}
+      <button
+        onClick={onPrevious}
+        disabled={totalMatches === 0}
+        style={{
+          padding: '0.375rem',
+          backgroundColor: 'transparent',
+          border: `1px solid ${theme.colors.border}`,
+          borderRadius: '4px',
+          cursor: totalMatches === 0 ? 'not-allowed' : 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          opacity: totalMatches === 0 ? 0.5 : 1,
+        }}
+        title="Previous match"
+      >
+        <ChevronUp size={16} color={theme.colors.text} />
+      </button>
+      <button
+        onClick={onNext}
+        disabled={totalMatches === 0}
+        style={{
+          padding: '0.375rem',
+          backgroundColor: 'transparent',
+          border: `1px solid ${theme.colors.border}`,
+          borderRadius: '4px',
+          cursor: totalMatches === 0 ? 'not-allowed' : 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          opacity: totalMatches === 0 ? 0.5 : 1,
+        }}
+        title="Next match"
+      >
+        <ChevronDown size={16} color={theme.colors.text} />
+      </button>
+      <button
+        onClick={onClose}
+        style={{
+          padding: '0.375rem',
+          backgroundColor: 'transparent',
+          border: `1px solid ${theme.colors.border}`,
+          borderRadius: '4px',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+        }}
+        title="Close search"
+      >
+        <X size={16} color={theme.colors.text} />
+      </button>
+    </div>
+  );
+};
+
+/**
  * Render skill metadata section with support for partial metadata
  */
 const SkillMetadataSection: React.FC<{
@@ -133,11 +249,13 @@ const SkillMetadataSection: React.FC<{
   theme: Theme;
   structure?: SkillStructure;
   skill?: Skill;
+  actions?: PanelActions;
 }> = ({
   metadata,
   theme,
   structure,
   skill,
+  actions,
 }) => {
   const [expandedSections, setExpandedSections] = React.useState<{
     scripts: boolean;
@@ -231,7 +349,7 @@ const SkillMetadataSection: React.FC<{
             (No description provided)
           </p>
         )}
-        {structure && (structure.hasScripts || structure.hasReferences || structure.hasAssets) && (
+        {(structure && (structure.hasScripts || structure.hasReferences || structure.hasAssets)) || (actions && skill?.path) ? (
           <div style={{
             marginTop: theme.space[3],
           }}>
@@ -239,89 +357,176 @@ const SkillMetadataSection: React.FC<{
               display: 'flex',
               gap: theme.space[2],
               flexWrap: 'wrap',
+              justifyContent: 'space-between',
+              alignItems: 'center',
             }}>
-              {structure.hasScripts && (
-                <button
-                  onClick={() => toggleSection('scripts')}
-                  style={{
-                    padding: '0.25rem 0.75rem',
-                    borderRadius: '12px',
-                    backgroundColor: theme.colors.primary,
-                    color: theme.colors.background,
-                    fontSize: theme.fontSizes[0],
-                    fontFamily: theme.fonts.body,
-                    fontWeight: 500,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    border: 'none',
-                    cursor: 'pointer',
-                    transition: 'opacity 0.2s',
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
-                  onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-                >
-                  <Code size={14} />
-                  <span>Scripts ({structure.scriptFiles?.length || 0})</span>
-                  <span style={{ fontSize: '10px' }}>{expandedSections.scripts ? '▼' : '▶'}</span>
-                </button>
-              )}
-              {structure.hasReferences && (
-                <button
-                  onClick={() => toggleSection('references')}
-                  style={{
-                    padding: '0.25rem 0.75rem',
-                    borderRadius: '12px',
-                    backgroundColor: theme.colors.secondary,
-                    color: theme.colors.background,
-                    fontSize: theme.fontSizes[0],
-                    fontFamily: theme.fonts.body,
-                    fontWeight: 500,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    border: 'none',
-                    cursor: 'pointer',
-                    transition: 'opacity 0.2s',
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
-                  onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-                >
-                  <BookOpen size={14} />
-                  <span>References ({structure.referenceFiles?.length || 0})</span>
-                  <span style={{ fontSize: '10px' }}>{expandedSections.references ? '▼' : '▶'}</span>
-                </button>
-              )}
-              {structure.hasAssets && (
-                <button
-                  onClick={() => toggleSection('assets')}
-                  style={{
-                    padding: '0.25rem 0.75rem',
-                    borderRadius: '12px',
-                    backgroundColor: theme.colors.accent,
-                    color: theme.colors.background,
-                    fontSize: theme.fontSizes[0],
-                    fontFamily: theme.fonts.body,
-                    fontWeight: 500,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    border: 'none',
-                    cursor: 'pointer',
-                    transition: 'opacity 0.2s',
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
-                  onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-                >
-                  <Package size={14} />
-                  <span>Assets ({structure.assetFiles?.length || 0})</span>
-                  <span style={{ fontSize: '10px' }}>{expandedSections.assets ? '▼' : '▶'}</span>
-                </button>
+              <div style={{
+                display: 'flex',
+                gap: theme.space[2],
+                flexWrap: 'wrap',
+              }}>
+                {structure?.hasScripts && (
+                  <button
+                    onClick={() => toggleSection('scripts')}
+                    style={{
+                      padding: '0.25rem 0.75rem',
+                      borderRadius: '12px',
+                      backgroundColor: theme.colors.primary,
+                      color: theme.colors.background,
+                      fontSize: theme.fontSizes[0],
+                      fontFamily: theme.fonts.body,
+                      fontWeight: 500,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      border: 'none',
+                      cursor: 'pointer',
+                      transition: 'opacity 0.2s',
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+                    onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                  >
+                    <Code size={14} />
+                    <span>Scripts ({structure.scriptFiles?.length || 0})</span>
+                    <span style={{ fontSize: '10px' }}>{expandedSections.scripts ? '▼' : '▶'}</span>
+                  </button>
+                )}
+                {structure?.hasReferences && (
+                  <button
+                    onClick={() => toggleSection('references')}
+                    style={{
+                      padding: '0.25rem 0.75rem',
+                      borderRadius: '12px',
+                      backgroundColor: theme.colors.secondary,
+                      color: theme.colors.background,
+                      fontSize: theme.fontSizes[0],
+                      fontFamily: theme.fonts.body,
+                      fontWeight: 500,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      border: 'none',
+                      cursor: 'pointer',
+                      transition: 'opacity 0.2s',
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+                    onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                  >
+                    <BookOpen size={14} />
+                    <span>References ({structure.referenceFiles?.length || 0})</span>
+                    <span style={{ fontSize: '10px' }}>{expandedSections.references ? '▼' : '▶'}</span>
+                  </button>
+                )}
+                {structure?.hasAssets && (
+                  <button
+                    onClick={() => toggleSection('assets')}
+                    style={{
+                      padding: '0.25rem 0.75rem',
+                      borderRadius: '12px',
+                      backgroundColor: theme.colors.accent,
+                      color: theme.colors.background,
+                      fontSize: theme.fontSizes[0],
+                      fontFamily: theme.fonts.body,
+                      fontWeight: 500,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      border: 'none',
+                      cursor: 'pointer',
+                      transition: 'opacity 0.2s',
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+                    onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                  >
+                    <Package size={14} />
+                    <span>Assets ({structure.assetFiles?.length || 0})</span>
+                    <span style={{ fontSize: '10px' }}>{expandedSections.assets ? '▼' : '▶'}</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              {actions && skill?.path && (
+                <div style={{
+                  display: 'flex',
+                  gap: theme.space[2],
+                }}>
+                  <button
+                    onClick={() => {
+                      if (skill?.path) {
+                        actions?.openFile?.(skill.path);
+                      }
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: theme.space[1],
+                      padding: `${theme.space[1]} ${theme.space[2]}`,
+                      backgroundColor: theme.colors.backgroundSecondary,
+                      border: `1px solid ${theme.colors.border}`,
+                      borderRadius: '6px',
+                      color: theme.colors.text,
+                      fontSize: theme.fontSizes[1],
+                      fontFamily: theme.fonts.body,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = theme.colors.primary;
+                      e.currentTarget.style.color = theme.colors.background;
+                      e.currentTarget.style.borderColor = theme.colors.primary;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = theme.colors.backgroundSecondary;
+                      e.currentTarget.style.color = theme.colors.text;
+                      e.currentTarget.style.borderColor = theme.colors.border;
+                    }}
+                    title="Open in file editor"
+                  >
+                    <FileEdit size={14} />
+                    <span>Edit</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      // Emit event for opening in MDX editor
+                      // This will be handled by the workspace to open in MDX editor
+                      console.log('Open in MDX editor:', skill.path);
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: theme.space[1],
+                      padding: `${theme.space[1]} ${theme.space[2]}`,
+                      backgroundColor: theme.colors.backgroundSecondary,
+                      border: `1px solid ${theme.colors.border}`,
+                      borderRadius: '6px',
+                      color: theme.colors.text,
+                      fontSize: theme.fontSizes[1],
+                      fontFamily: theme.fonts.body,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = theme.colors.secondary;
+                      e.currentTarget.style.color = theme.colors.background;
+                      e.currentTarget.style.borderColor = theme.colors.secondary;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = theme.colors.backgroundSecondary;
+                      e.currentTarget.style.color = theme.colors.text;
+                      e.currentTarget.style.borderColor = theme.colors.border;
+                    }}
+                    title="Open in MDX editor"
+                  >
+                    <ExternalLink size={14} />
+                    <span>MDX Editor</span>
+                  </button>
+                </div>
               )}
             </div>
 
             {/* Expanded file lists */}
-            {expandedSections.scripts && structure.scriptFiles && structure.scriptFiles.length > 0 && (
+            {expandedSections.scripts && structure?.scriptFiles && structure.scriptFiles.length > 0 && (
               <div style={{
                 marginTop: theme.space[2],
                 padding: theme.space[2],
@@ -343,7 +548,7 @@ const SkillMetadataSection: React.FC<{
                   paddingLeft: theme.space[3],
                   listStyle: 'none',
                 }}>
-                  {structure.scriptFiles.map((file, idx) => (
+                  {structure?.scriptFiles.map((file, idx) => (
                     <li key={idx} style={{
                       fontSize: theme.fontSizes[1],
                       color: theme.colors.text,
@@ -357,7 +562,7 @@ const SkillMetadataSection: React.FC<{
               </div>
             )}
 
-            {expandedSections.references && structure.referenceFiles && structure.referenceFiles.length > 0 && (
+            {expandedSections.references && structure?.referenceFiles && structure.referenceFiles.length > 0 && (
               <div style={{
                 marginTop: theme.space[2],
                 padding: theme.space[2],
@@ -379,7 +584,7 @@ const SkillMetadataSection: React.FC<{
                   paddingLeft: theme.space[3],
                   listStyle: 'none',
                 }}>
-                  {structure.referenceFiles.map((file, idx) => (
+                  {structure?.referenceFiles.map((file, idx) => (
                     <li key={idx} style={{
                       fontSize: theme.fontSizes[1],
                       color: theme.colors.text,
@@ -393,7 +598,7 @@ const SkillMetadataSection: React.FC<{
               </div>
             )}
 
-            {expandedSections.assets && structure.assetFiles && structure.assetFiles.length > 0 && (
+            {expandedSections.assets && structure?.assetFiles && structure.assetFiles.length > 0 && (
               <div style={{
                 marginTop: theme.space[2],
                 padding: theme.space[2],
@@ -415,7 +620,7 @@ const SkillMetadataSection: React.FC<{
                   paddingLeft: theme.space[3],
                   listStyle: 'none',
                 }}>
-                  {structure.assetFiles.map((file, idx) => (
+                  {structure?.assetFiles.map((file, idx) => (
                     <li key={idx} style={{
                       fontSize: theme.fontSizes[1],
                       color: theme.colors.text,
@@ -429,7 +634,7 @@ const SkillMetadataSection: React.FC<{
               </div>
             )}
           </div>
-        )}
+        ) : null}
 
     </div>
   );
@@ -458,9 +663,15 @@ export const SkillMarkdown: React.FC<SkillMarkdownProps> = ({
   containerWidth,
   structure,
   skill,
+  actions,
 }) => {
   const [parsed, setParsed] = React.useState<PartialParsedSkill | null>(null);
   const [headers, setHeaders] = React.useState<MarkdownHeader[]>([]);
+  const [showSearch, setShowSearch] = React.useState(false);
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const [currentMatch, setCurrentMatch] = React.useState(0);
+  const [totalMatches, setTotalMatches] = React.useState(0);
+  const contentRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     const skill = parseSkillMarkdownGraceful(content);
@@ -474,6 +685,164 @@ export const SkillMarkdown: React.FC<SkillMarkdownProps> = ({
     const extractedHeaders = extractHeaders(skill.body);
     setHeaders(extractedHeaders);
   }, [content, onParsed, onWarnings]);
+
+  const scrollToMatch = React.useCallback((matches: HTMLElement[], index: number, theme: Theme) => {
+    // Remove active class from all matches
+    matches.forEach(m => {
+      m.style.backgroundColor = '#ffeb3b'; // Bright yellow
+      m.style.outline = 'none';
+      m.style.boxShadow = 'none';
+    });
+
+    // Highlight current match with orange
+    if (matches[index]) {
+      matches[index].style.backgroundColor = '#ff9800'; // Bright orange
+      matches[index].style.outline = `2px solid ${theme.colors.primary}`; // Blue outline for extra visibility
+      matches[index].style.boxShadow = '0 0 8px rgba(255, 152, 0, 0.6)'; // Orange glow
+      matches[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, []);
+
+  const handleNext = React.useCallback(() => {
+    if (totalMatches === 0) return;
+    const newIndex = (currentMatch + 1) % totalMatches;
+    setCurrentMatch(newIndex);
+
+    const matches = contentRef.current?.querySelectorAll('.search-highlight');
+    if (matches) {
+      scrollToMatch(Array.from(matches) as HTMLElement[], newIndex, theme);
+    }
+  }, [totalMatches, currentMatch, theme, scrollToMatch]);
+
+  const handlePrevious = React.useCallback(() => {
+    if (totalMatches === 0) return;
+    const newIndex = currentMatch === 0 ? totalMatches - 1 : currentMatch - 1;
+    setCurrentMatch(newIndex);
+
+    const matches = contentRef.current?.querySelectorAll('.search-highlight');
+    if (matches) {
+      scrollToMatch(Array.from(matches) as HTMLElement[], newIndex, theme);
+    }
+  }, [totalMatches, currentMatch, theme, scrollToMatch]);
+
+  // Handle Cmd+F / Ctrl+F keyboard shortcut
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'f') {
+        e.preventDefault();
+        setShowSearch(true);
+      }
+      // ESC to close search
+      if (e.key === 'Escape' && showSearch) {
+        setShowSearch(false);
+        setSearchQuery('');
+      }
+      // Enter to go to next match when search is open
+      if (e.key === 'Enter' && showSearch && totalMatches > 0) {
+        e.preventDefault();
+        handleNext();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showSearch, totalMatches, handleNext]);
+
+  // Search and highlight logic
+  React.useEffect(() => {
+    if (!searchQuery || !contentRef.current) {
+      // Remove all highlights
+      const highlights = contentRef.current?.querySelectorAll('.search-highlight');
+      highlights?.forEach(el => {
+        const parent = el.parentNode;
+        if (parent) {
+          parent.replaceChild(document.createTextNode(el.textContent || ''), el);
+          parent.normalize();
+        }
+      });
+      setTotalMatches(0);
+      setCurrentMatch(0);
+      return;
+    }
+
+    const container = contentRef.current;
+    const walker = document.createTreeWalker(
+      container,
+      NodeFilter.SHOW_TEXT,
+      null
+    );
+
+    const textNodes: Text[] = [];
+    let node: Node | null;
+    while ((node = walker.nextNode())) {
+      textNodes.push(node as Text);
+    }
+
+    // Remove previous highlights
+    const oldHighlights = container.querySelectorAll('.search-highlight');
+    oldHighlights.forEach(el => {
+      const parent = el.parentNode;
+      if (parent) {
+        parent.replaceChild(document.createTextNode(el.textContent || ''), el);
+        parent.normalize();
+      }
+    });
+
+    // Find and highlight matches
+    const matches: HTMLElement[] = [];
+    const regex = new RegExp(searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+
+    textNodes.forEach(textNode => {
+      const text = textNode.textContent || '';
+      const matches_in_text = [...text.matchAll(regex)];
+
+      if (matches_in_text.length > 0) {
+        const fragment = document.createDocumentFragment();
+        let lastIndex = 0;
+
+        matches_in_text.forEach(match => {
+          const matchIndex = match.index!;
+
+          // Add text before match
+          if (matchIndex > lastIndex) {
+            fragment.appendChild(document.createTextNode(text.slice(lastIndex, matchIndex)));
+          }
+
+          // Add highlighted match
+          const mark = document.createElement('mark');
+          mark.className = 'search-highlight';
+          mark.style.backgroundColor = '#ffeb3b'; // Bright yellow
+          mark.style.color = '#000000'; // Black text for contrast
+          mark.style.fontWeight = '500';
+          mark.textContent = match[0];
+          fragment.appendChild(mark);
+          matches.push(mark);
+
+          lastIndex = matchIndex + match[0].length;
+        });
+
+        // Add remaining text
+        if (lastIndex < text.length) {
+          fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
+        }
+
+        textNode.parentNode?.replaceChild(fragment, textNode);
+      }
+    });
+
+    setTotalMatches(matches.length);
+    if (matches.length > 0) {
+      setCurrentMatch(0);
+      scrollToMatch(matches, 0, theme);
+    }
+  }, [searchQuery, parsed, theme, scrollToMatch]);
+
+  const handleCloseSearch = () => {
+    setShowSearch(false);
+    setSearchQuery('');
+    setCurrentMatch(0);
+    setTotalMatches(0);
+  };
 
   // Safety check for theme
   if (!theme || !theme.space) {
@@ -518,8 +887,20 @@ export const SkillMarkdown: React.FC<SkillMarkdownProps> = ({
         background: theme.colors.background,
       }}
     >
+      {showSearch && (
+        <SearchBar
+          theme={theme}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          currentMatch={currentMatch}
+          totalMatches={totalMatches}
+          onPrevious={handlePrevious}
+          onNext={handleNext}
+          onClose={handleCloseSearch}
+        />
+      )}
       <div style={{ padding: theme.space[3], paddingBottom: 0 }}>
-        <SkillMetadataSection metadata={parsed.metadata} theme={theme} structure={structure} skill={skill} />
+        <SkillMetadataSection metadata={parsed.metadata} theme={theme} structure={structure} skill={skill} actions={actions} />
       </div>
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
         <SkillSidebar
@@ -528,7 +909,7 @@ export const SkillMarkdown: React.FC<SkillMarkdownProps> = ({
           theme={theme}
           skill={skill}
         />
-        <div style={{ flex: 1, overflow: 'auto', padding: theme.space[3], paddingTop: 0 }}>
+        <div ref={contentRef} style={{ flex: 1, overflow: 'auto', padding: theme.space[3], paddingTop: 0 }}>
           <IndustryMarkdownSlide
             content={parsed.body}
             theme={theme}

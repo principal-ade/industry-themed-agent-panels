@@ -237,6 +237,11 @@ const createSkillsMocks = () => {
       hasAssets: false,
       scriptFiles: ['scan.sh', 'audit-dependencies.js'],
       referenceFiles: ['owasp-checklist.md', 'security-best-practices.md'],
+      frontmatterValidation: {
+        isValid: true,
+        hasStructure: true,
+        missingFields: [],
+      },
     },
     {
       id: 'global:~/.claude/skills/translation-helper',
@@ -267,6 +272,12 @@ const createSkillsMocks = () => {
       hasAssets: true,
       referenceFiles: ['language-codes.md', 'glossary.md'],
       assetFiles: ['terminology-database.json'],
+      frontmatterValidation: {
+        isValid: true,
+        hasStructure: false,
+        missingFields: [],
+        errorMessage: 'Missing YAML frontmatter (must start with ---)',
+      },
     },
     {
       id: 'global:~/.agent/skills/api-documentation-generator',
@@ -297,6 +308,11 @@ const createSkillsMocks = () => {
       hasAssets: true,
       scriptFiles: ['generate-docs.js', 'parse-api.py'],
       assetFiles: ['doc-template.html', 'styles.css'],
+      frontmatterValidation: {
+        isValid: true,
+        hasStructure: true,
+        missingFields: [],
+      },
     },
   ];
 

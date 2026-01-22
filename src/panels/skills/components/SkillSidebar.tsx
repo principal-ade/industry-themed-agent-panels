@@ -3,7 +3,7 @@
  */
 import { Theme } from '@principal-ade/industry-theme';
 import { type PartialSkillMetadata } from '@principal-ade/markdown-utils';
-import { Globe, Folder, AlertTriangle } from 'lucide-react';
+import { Globe, Folder, AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
 import React from 'react';
 
 import type { MarkdownHeader } from '../utils/extractHeaders';
@@ -117,6 +117,7 @@ export const SkillSidebar: React.FC<SkillSidebarProps> = ({
   skill,
 }) => {
   const [activeTab, setActiveTab] = React.useState<SidebarTab>('toc');
+  const [isCollapsed, setIsCollapsed] = React.useState(false);
 
   const hasMetadata =
     metadata.compatibility ||
@@ -140,21 +141,61 @@ export const SkillSidebar: React.FC<SkillSidebarProps> = ({
     <div
       className={className}
       style={{
-        width: '250px',
+        width: isCollapsed ? '0px' : '250px',
         flexShrink: 0,
         display: 'flex',
         flexDirection: 'column',
-        borderRight: `1px solid ${theme.colors.border}`,
+        borderRight: isCollapsed ? 'none' : `1px solid ${theme.colors.border}`,
+        position: 'relative',
+        transition: 'width 0.3s ease',
+        overflow: 'visible',
       }}
     >
-      {/* Tab Headers */}
-      <div
+      {/* Collapse/Expand Handle */}
+      <button
+        onClick={() => setIsCollapsed(!isCollapsed)}
         style={{
+          position: 'absolute',
+          right: '-20px',
+          top: '16px',
+          width: '20px',
+          height: '60px',
+          padding: 0,
+          backgroundColor: theme.colors.backgroundSecondary,
+          border: `1px solid ${theme.colors.border}`,
+          borderLeft: 'none',
+          borderTopRightRadius: '8px',
+          borderBottomRightRadius: '8px',
+          cursor: 'pointer',
           display: 'flex',
-          borderBottom: `1px solid ${theme.colors.border}`,
-          backgroundColor: theme.colors.background,
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: theme.colors.textSecondary,
+          transition: 'all 0.2s',
+          zIndex: 10,
         }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = theme.colors.primary;
+          e.currentTarget.style.color = theme.colors.background;
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = theme.colors.backgroundSecondary;
+          e.currentTarget.style.color = theme.colors.textSecondary;
+        }}
+        title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
       >
+        {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+      </button>
+
+      {/* Tab Headers */}
+      {!isCollapsed && (
+        <div
+          style={{
+            display: 'flex',
+            borderBottom: `1px solid ${theme.colors.border}`,
+            backgroundColor: theme.colors.background,
+          }}
+        >
         {headers.length > 0 && (
           <button
             onClick={() => setActiveTab('toc')}
@@ -219,10 +260,12 @@ export const SkillSidebar: React.FC<SkillSidebarProps> = ({
             Metadata
           </button>
         )}
-      </div>
+        </div>
+      )}
 
       {/* Tab Content */}
-      <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+      {!isCollapsed && (
+        <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
         {activeTab === 'toc' && headers.length > 0 && (
           <TableOfContents
             headers={headers}
@@ -458,7 +501,8 @@ export const SkillSidebar: React.FC<SkillSidebarProps> = ({
             )}
           </div>
         )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -195,6 +195,7 @@ export const SkillDetailPanel: React.FC<SkillDetailPanelProps> = ({
                 assetFiles: skill.assetFiles,
               }}
               skill={skill}
+              actions={actions}
             />
           </div>
         </>

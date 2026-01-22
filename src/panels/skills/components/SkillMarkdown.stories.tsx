@@ -5,6 +5,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { fn } from 'storybook/test';
 
 import { SkillMarkdown } from './SkillMarkdown';
+import { createMockActions } from '../../../mocks/panelContext';
 
 /**
  * SkillMarkdown component for rendering Agent Skills with frontmatter
@@ -297,6 +298,17 @@ export const Basic: Story = {
     theme: defaultTheme,
     onParsed: fn(),
     onError: fn(),
+    actions: createMockActions(),
+    skill: {
+      id: 'legal-review',
+      name: 'legal-review',
+      path: '/Users/developer/.claude/skills/legal-review/SKILL.md',
+      source: 'global-universal' as const,
+      content: basicSkillContent,
+      hasScripts: false,
+      hasReferences: false,
+      hasAssets: false,
+    },
   },
 };
 
@@ -321,6 +333,19 @@ export const FullFeatured: Story = {
     theme: defaultTheme,
     onParsed: fn(),
     onError: fn(),
+    actions: createMockActions(),
+    skill: {
+      id: 'sql-query-generator',
+      name: 'sql-query-generator',
+      path: '/Users/developer/.claude/skills/sql-query-generator/SKILL.md',
+      source: 'global-universal' as const,
+      content: fullFeaturedSkillContent,
+      hasScripts: true,
+      hasReferences: true,
+      hasAssets: false,
+      scriptFiles: ['query-builder.js', 'validator.js'],
+      referenceFiles: ['postgresql-docs.md', 'mysql-reference.md'],
+    },
   },
 };
 
@@ -1094,6 +1119,18 @@ export const LongDocumentWithTableOfContents: Story = {
     theme: defaultTheme,
     onParsed: fn(),
     onWarnings: fn(),
+    actions: createMockActions(),
+    skill: {
+      id: 'comprehensive-guide',
+      name: 'comprehensive-guide',
+      path: '/Users/developer/my-project/skills/comprehensive-guide/SKILL.md',
+      source: 'project-universal' as const,
+      content: longDocumentContent,
+      hasScripts: false,
+      hasReferences: true,
+      hasAssets: false,
+      referenceFiles: ['examples.md', 'troubleshooting.md'],
+    },
   },
   parameters: {
     docs: {

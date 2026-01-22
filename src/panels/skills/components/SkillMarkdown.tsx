@@ -18,7 +18,7 @@ import { IndustryMarkdownSlide } from 'themed-markdown';
 import type { Skill, SkillSource } from '../hooks/useSkillsData';
 import { extractHeaders, type MarkdownHeader } from '../utils/extractHeaders';
 import { SkillSidebar } from './SkillSidebar';
-import type { PanelActions } from '../../../types';
+import type { PanelActions, PanelEventEmitter } from '../../../types';
 
 export interface SkillStructure {
   hasScripts?: boolean;
@@ -50,6 +50,8 @@ export interface SkillMarkdownProps {
   skill?: Skill;
   /** Optional panel actions for file operations */
   actions?: PanelActions;
+  /** Optional event emitter for panel communication */
+  events?: PanelEventEmitter;
 }
 
 /**
@@ -250,12 +252,14 @@ const SkillMetadataSection: React.FC<{
   structure?: SkillStructure;
   skill?: Skill;
   actions?: PanelActions;
+  events?: PanelEventEmitter;
 }> = ({
   metadata,
   theme,
   structure,
   skill,
   actions,
+  events,
 }) => {
   const [expandedSections, setExpandedSections] = React.useState<{
     scripts: boolean;
@@ -446,7 +450,7 @@ const SkillMetadataSection: React.FC<{
               </div>
 
               {/* Action Buttons */}
-              {actions && skill?.path && (
+              {events && skill?.path && (
                 <div style={{
                   display: 'flex',
                   gap: theme.space[2],
@@ -454,7 +458,15 @@ const SkillMetadataSection: React.FC<{
                   <button
                     onClick={() => {
                       if (skill?.path) {
-                        actions?.openFile?.(skill.path);
+                        events.emit({
+                          type: 'file:open',
+                          source: 'skill-detail',
+                          timestamp: Date.now(),
+                          payload: {
+                            filePath: skill.path,
+                            gitStatus: 'untracked',
+                          },
+                        });
                       }
                     }}
                     style={{
@@ -488,9 +500,16 @@ const SkillMetadataSection: React.FC<{
                   </button>
                   <button
                     onClick={() => {
-                      // Emit event for opening in MDX editor
-                      // This will be handled by the workspace to open in MDX editor
-                      console.log('Open in MDX editor:', skill.path);
+                      if (skill?.path) {
+                        events.emit({
+                          type: 'file:openInMdxEditor',
+                          source: 'skill-detail',
+                          timestamp: Date.now(),
+                          payload: {
+                            filePath: skill.path,
+                          },
+                        });
+                      }
                     }}
                     style={{
                       display: 'flex',
@@ -664,6 +683,7 @@ export const SkillMarkdown: React.FC<SkillMarkdownProps> = ({
   structure,
   skill,
   actions,
+  events,
 }) => {
   const [parsed, setParsed] = React.useState<PartialParsedSkill | null>(null);
   const [headers, setHeaders] = React.useState<MarkdownHeader[]>([]);
@@ -900,7 +920,7 @@ export const SkillMarkdown: React.FC<SkillMarkdownProps> = ({
         />
       )}
       <div style={{ padding: theme.space[3], paddingBottom: 0 }}>
-        <SkillMetadataSection metadata={parsed.metadata} theme={theme} structure={structure} skill={skill} actions={actions} />
+        <SkillMetadataSection metadata={parsed.metadata} theme={theme} structure={structure} skill={skill} actions={actions} events={events} />
       </div>
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
         <SkillSidebar

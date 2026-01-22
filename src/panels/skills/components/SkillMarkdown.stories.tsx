@@ -5,7 +5,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { fn } from 'storybook/test';
 
 import { SkillMarkdown } from './SkillMarkdown';
-import { createMockActions } from '../../../mocks/panelContext';
+import { createMockActions, createMockEvents } from '../../../mocks/panelContext';
 
 /**
  * SkillMarkdown component for rendering Agent Skills with frontmatter
@@ -299,6 +299,7 @@ export const Basic: Story = {
     onParsed: fn(),
     onError: fn(),
     actions: createMockActions(),
+    events: createMockEvents(),
     skill: {
       id: 'legal-review',
       name: 'legal-review',
@@ -334,6 +335,7 @@ export const FullFeatured: Story = {
     onParsed: fn(),
     onError: fn(),
     actions: createMockActions(),
+    events: createMockEvents(),
     skill: {
       id: 'sql-query-generator',
       name: 'sql-query-generator',
@@ -1120,6 +1122,7 @@ export const LongDocumentWithTableOfContents: Story = {
     onParsed: fn(),
     onWarnings: fn(),
     actions: createMockActions(),
+    events: createMockEvents(),
     skill: {
       id: 'comprehensive-guide',
       name: 'comprehensive-guide',

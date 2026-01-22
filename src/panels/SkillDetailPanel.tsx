@@ -196,6 +196,7 @@ export const SkillDetailPanel: React.FC<SkillDetailPanelProps> = ({
               }}
               skill={skill}
               actions={actions}
+              events={events}
             />
           </div>
         </>

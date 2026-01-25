@@ -1,4 +1,5 @@
 import { SkillsListPanel, type SkillsListPanelProps } from './panels/SkillsListPanel';
+import { SkillsBrowsePanel } from './panels/SkillsBrowsePanel';
 import { SkillDetailPanel, type SkillDetailPanelProps } from './panels/SkillDetailPanel';
 import { AgentsListPanel } from './panels/AgentsListPanel';
 import { AgentDetailPanel } from './panels/AgentDetailPanel';
@@ -7,6 +8,9 @@ import type { Skill } from './panels/skills/hooks/useSkillsData';
 
 // Export component props types for external use
 export type { SkillsListPanelProps, SkillDetailPanelProps, Skill };
+
+// Export the SkillsBrowsePanel component for direct use
+export { SkillsBrowsePanel };
 
 /**
  * Export array of panel definitions.
@@ -38,6 +42,33 @@ export const panels: PanelDefinition[] = [
     onUnmount: async (_context: PanelContextValue) => {
       // eslint-disable-next-line no-console
       console.log('Skills List Panel unmounting');
+    },
+  },
+  {
+    metadata: {
+      id: 'industry-theme.skills-browse',
+      name: 'Browse Skills',
+      icon: '🔍',
+      version: '0.1.0',
+      author: 'Principal ADE',
+      description: 'Browse Agent Skills from GitHub repositories',
+      slices: ['fileTree'], // Only needs fileTree, not globalSkills
+    },
+    component: SkillsBrowsePanel,
+
+    // Optional: Called when this specific panel is mounted
+    onMount: async (context: PanelContextValue) => {
+      // eslint-disable-next-line no-console
+      console.log(
+        'Skills Browse Panel mounted',
+        context.currentScope.repository?.path
+      );
+    },
+
+    // Optional: Called when this specific panel is unmounted
+    onUnmount: async (_context: PanelContextValue) => {
+      // eslint-disable-next-line no-console
+      console.log('Skills Browse Panel unmounting');
     },
   },
   {

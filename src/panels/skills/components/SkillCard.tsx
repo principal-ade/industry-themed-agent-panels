@@ -7,6 +7,11 @@ interface SkillCardProps {
   skill: Skill;
   onClick?: (skill: Skill) => void;
   isSelected?: boolean;
+  /**
+   * The current filter context ('project' or 'global')
+   * Used to determine which path to copy when skill has multiple installations
+   */
+  filterContext?: 'project' | 'global';
 }
 
 /**
@@ -82,15 +87,43 @@ export const SkillCard: React.FC<SkillCardProps> = ({
   skill,
   onClick,
   isSelected = false,
+  filterContext,
 }) => {
   const { theme } = useTheme();
   const sourceConfig = getSourceConfig(skill.source);
   const [pathCopied, setPathCopied] = React.useState(false);
 
+  // Determine which path to copy based on filter context and installed locations
+  const getPathToCopy = (): string => {
+    // If no filter context or no multiple installations, use default path
+    if (!filterContext || !skill.installedLocations || skill.installedLocations.length <= 1) {
+      return skill.path;
+    }
+
+    // Find the installation matching the filter context
+    if (filterContext === 'project') {
+      const projectInstallation = skill.installedLocations.find(
+        (loc) =>
+          loc.source === 'project-universal' ||
+          loc.source === 'project-claude' ||
+          loc.source === 'project-other'
+      );
+      return projectInstallation?.path || skill.path;
+    } else if (filterContext === 'global') {
+      const globalInstallation = skill.installedLocations.find(
+        (loc) => loc.source === 'global-universal' || loc.source === 'global-claude'
+      );
+      return globalInstallation?.path || skill.path;
+    }
+
+    return skill.path;
+  };
+
   const handleCopyPath = async (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent triggering card onClick
     try {
-      await navigator.clipboard.writeText(skill.path);
+      const pathToCopy = getPathToCopy();
+      await navigator.clipboard.writeText(pathToCopy);
       setPathCopied(true);
       setTimeout(() => setPathCopied(false), 2000);
     } catch (err) {
@@ -145,31 +178,37 @@ export const SkillCard: React.FC<SkillCardProps> = ({
           >
             {skill.name}
           </h3>
-          {/* Source badge */}
+          {/* Source badge - only show when no filter context (Browse mode, etc.) */}
           <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexWrap: 'wrap' }}>
-            <div
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-                padding: '2px 6px',
-                borderRadius: theme.radii[1],
-                backgroundColor: sourceConfig.bgColor,
-                border: `1px solid ${sourceConfig.borderColor}`,
-                fontSize: theme.fontSizes[0],
-                color: sourceConfig.color,
-                fontWeight: 500,
-                width: 'fit-content',
-              }}
-              title={`Source: ${skill.source}`}
-            >
-              <sourceConfig.icon size={10} />
-              <span>{sourceConfig.label}</span>
-            </div>
+            {!filterContext && (
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: '2px 6px',
+                  borderRadius: theme.radii[1],
+                  backgroundColor: sourceConfig.bgColor,
+                  border: `1px solid ${sourceConfig.borderColor}`,
+                  fontSize: theme.fontSizes[0],
+                  color: sourceConfig.color,
+                  fontWeight: 500,
+                  width: 'fit-content',
+                }}
+                title={`Source: ${skill.source}`}
+              >
+                <sourceConfig.icon size={10} />
+                <span>{sourceConfig.label}</span>
+              </div>
+            )}
 
             {/* GitHub source badge (if installed from GitHub) */}
             {skill.metadata?.owner && skill.metadata?.repo && (
-              <div
+              <a
+                href={skill.metadata.installedFrom || `https://github.com/${skill.metadata.owner}/${skill.metadata.repo}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()} // Prevent card click when clicking link
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -183,12 +222,23 @@ export const SkillCard: React.FC<SkillCardProps> = ({
                   fontWeight: 500,
                   fontFamily: theme.fonts.monospace,
                   width: 'fit-content',
+                  textDecoration: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
                 }}
-                title={`From: ${skill.metadata.installedFrom}\nInstalled: ${skill.metadata.installedAt ? new Date(skill.metadata.installedAt).toLocaleString() : 'Unknown'}`}
+                title={`Click to open: ${skill.metadata.installedFrom || `https://github.com/${skill.metadata.owner}/${skill.metadata.repo}`}\nInstalled: ${skill.metadata.installedAt ? new Date(skill.metadata.installedAt).toLocaleString() : 'Unknown'}`}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = `${theme.colors.textSecondary}25`;
+                  e.currentTarget.style.borderColor = `${theme.colors.textSecondary}50`;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = `${theme.colors.textSecondary}15`;
+                  e.currentTarget.style.borderColor = `${theme.colors.textSecondary}30`;
+                }}
               >
                 <Github size={10} />
-                <span>{skill.metadata.owner}/{skill.metadata.repo}</span>
-              </div>
+                <span>From {skill.metadata.owner}/{skill.metadata.repo}</span>
+              </a>
             )}
 
             {/* Frontmatter validation badge */}
@@ -222,13 +272,31 @@ export const SkillCard: React.FC<SkillCardProps> = ({
 
             {/* Also installed in badge (multiple locations) */}
             {skill.installedLocations && skill.installedLocations.length > 1 && (() => {
-              // Get locations other than the primary one
-              const otherLocations = skill.installedLocations
-                .filter(loc => loc.path !== skill.path)
-                .map(loc => abbreviateSourceName(loc.source));
+              // Get locations based on filter context
+              // If viewing 'project', show 'global' locations and vice versa
+              let otherLocations: typeof skill.installedLocations = [];
 
-              // Remove duplicates and join
-              const uniqueLocations = Array.from(new Set(otherLocations));
+              if (filterContext === 'project') {
+                // Show global installations
+                otherLocations = skill.installedLocations.filter(
+                  loc => loc.source === 'global-universal' || loc.source === 'global-claude'
+                );
+              } else if (filterContext === 'global') {
+                // Show project installations
+                otherLocations = skill.installedLocations.filter(
+                  loc => loc.source === 'project-universal' ||
+                         loc.source === 'project-claude' ||
+                         loc.source === 'project-other'
+                );
+              } else {
+                // No filter context - show all other locations (not the primary)
+                otherLocations = skill.installedLocations.filter(loc => loc.path !== skill.path);
+              }
+
+              if (otherLocations.length === 0) return null;
+
+              const locationNames = otherLocations.map(loc => abbreviateSourceName(loc.source));
+              const uniqueLocations = Array.from(new Set(locationNames));
               const locationText = uniqueLocations.join(', ');
 
               return (
@@ -246,8 +314,7 @@ export const SkillCard: React.FC<SkillCardProps> = ({
                     fontWeight: 500,
                     width: 'fit-content',
                   }}
-                  title={`Also installed in:\n${skill.installedLocations
-                    .filter(loc => loc.path !== skill.path)
+                  title={`Also installed in:\n${otherLocations
                     .map(loc => `${abbreviateSourceName(loc.source)}: ${loc.path}`)
                     .join('\n')}`}
                 >
@@ -402,7 +469,7 @@ export const SkillCard: React.FC<SkillCardProps> = ({
           transition: 'all 0.2s ease',
           border: `1px solid ${pathCopied ? theme.colors.success : 'transparent'}`,
         }}
-        title={pathCopied ? 'Copied!' : 'Click to copy path'}
+        title={pathCopied ? 'Copied!' : `Click to copy: ${getPathToCopy()}`}
         onMouseEnter={(e) => {
           if (!pathCopied) {
             e.currentTarget.style.background = theme.colors.backgroundTertiary || theme.colors.border;
@@ -414,7 +481,7 @@ export const SkillCard: React.FC<SkillCardProps> = ({
           }
         }}
       >
-        {pathCopied ? 'Copied!' : skill.path}
+        {pathCopied ? 'Copied!' : getPathToCopy()}
       </div>
     </div>
   );

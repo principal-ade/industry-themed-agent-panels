@@ -7,6 +7,14 @@ import { useSkillsBrowseData } from './skills/hooks/useSkillsBrowseData';
 import type { Skill } from './skills/hooks/useSkillsData';
 import { SkillCard } from './skills/components/SkillCard';
 
+export interface SkillsBrowsePanelProps extends PanelComponentProps {
+  /**
+   * When true, shows the refresh button and enables refresh functionality.
+   * The host must support handling 'skills:refresh' events.
+   */
+  supportsRefresh?: boolean;
+}
+
 /**
  * SkillsBrowsePanel - A panel for browsing Agent Skills from GitHub repositories
  *
@@ -18,9 +26,10 @@ import { SkillCard } from './skills/components/SkillCard';
  *
  * Note: This panel does NOT show global/installed skills - it's specifically for browsing remote repositories
  */
-export const SkillsBrowsePanel: React.FC<PanelComponentProps> = ({
+export const SkillsBrowsePanel: React.FC<SkillsBrowsePanelProps> = ({
   context,
   events,
+  supportsRefresh = false,
 }) => {
   const { theme } = useTheme();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -90,10 +99,11 @@ export const SkillsBrowsePanel: React.FC<PanelComponentProps> = ({
     }
   };
 
-  const handleRefresh = async () => {
+  const handleRefresh = () => {
     setIsRefreshing(true);
 
     // Emit refresh event so parent can handle filesystem rescans, etc.
+    // The host will update the filetree, which will trigger automatic reload via useEffect
     if (events) {
       events.emit({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -104,11 +114,10 @@ export const SkillsBrowsePanel: React.FC<PanelComponentProps> = ({
       });
     }
 
-    try {
-      await refreshSkills();
-    } finally {
+    // Show refresh animation for a brief period to provide visual feedback
+    setTimeout(() => {
       setIsRefreshing(false);
-    }
+    }, 800);
   };
 
   return (
@@ -240,31 +249,33 @@ export const SkillsBrowsePanel: React.FC<PanelComponentProps> = ({
             )}
           </div>
 
-          {/* Refresh button */}
-          <button
-            onClick={handleRefresh}
-            disabled={isRefreshing || isLoading}
-            style={{
-              background: theme.colors.backgroundSecondary,
-              border: `1px solid ${theme.colors.border}`,
-              borderRadius: theme.radii[1],
-              padding: '8px',
-              cursor: isRefreshing ? 'wait' : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'all 0.2s ease',
-            }}
-            title="Refresh skills"
-          >
-            <RefreshCw
-              size={16}
-              color={theme.colors.textSecondary}
+          {/* Refresh button - only show if host supports refresh */}
+          {supportsRefresh && (
+            <button
+              onClick={handleRefresh}
+              disabled={isRefreshing || isLoading}
               style={{
-                animation: isRefreshing ? 'spin 1s linear infinite' : 'none',
+                background: theme.colors.backgroundSecondary,
+                border: `1px solid ${theme.colors.border}`,
+                borderRadius: theme.radii[1],
+                padding: '8px',
+                cursor: isRefreshing || isLoading ? 'default' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.2s ease',
               }}
-            />
-          </button>
+              title="Refresh skills"
+            >
+              <RefreshCw
+                size={16}
+                color={theme.colors.textSecondary}
+                style={{
+                  animation: isRefreshing ? 'spin 1s linear infinite' : 'none',
+                }}
+              />
+            </button>
+          )}
         </div>
       </div>
 

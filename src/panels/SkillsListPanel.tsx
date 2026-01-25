@@ -7,7 +7,7 @@ import { useSkillsData, type Skill } from './skills/hooks/useSkillsData';
 import { SkillCard } from './skills/components/SkillCard';
 
 // Testing FileTree timestamp detection
-type SkillFilter = 'all' | 'project' | 'global';
+type SkillFilter = 'project' | 'global';
 
 export interface SkillsListPanelProps extends PanelComponentProps {
   /**
@@ -15,6 +15,11 @@ export interface SkillsListPanelProps extends PanelComponentProps {
    * - Changes "Project" filter label to "Git Repo"
    */
   browseMode?: boolean;
+  /**
+   * When true, shows the refresh button and enables refresh functionality.
+   * The host must support handling 'skills:refresh' events.
+   */
+  supportsRefresh?: boolean;
 }
 
 /**
@@ -30,12 +35,13 @@ export const SkillsListPanel: React.FC<SkillsListPanelProps> = ({
   context,
   events,
   browseMode = false,
+  supportsRefresh = false,
 }) => {
   const { theme } = useTheme();
   const panelRef = useRef<HTMLDivElement>(null);
   const [selectedSkillId, setSelectedSkillId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [skillFilter, setSkillFilter] = useState<SkillFilter>('all');
+  const [skillFilter, setSkillFilter] = useState<SkillFilter>('project');
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Load skills data
@@ -73,17 +79,36 @@ export const SkillsListPanel: React.FC<SkillsListPanelProps> = ({
     let filtered = skills;
 
     // Filter by source type
+    // For deduplicated skills, check installedLocations array
     if (skillFilter === 'project') {
-      filtered = filtered.filter(
-        (skill) =>
+      filtered = filtered.filter((skill) => {
+        // If skill has multiple installations, check if any are project-based
+        if (skill.installedLocations && skill.installedLocations.length > 0) {
+          return skill.installedLocations.some(
+            (loc) =>
+              loc.source === 'project-universal' ||
+              loc.source === 'project-claude' ||
+              loc.source === 'project-other'
+          );
+        }
+        // Otherwise check the primary source
+        return (
           skill.source === 'project-universal' ||
           skill.source === 'project-claude' ||
           skill.source === 'project-other'
-      );
+        );
+      });
     } else if (skillFilter === 'global') {
-      filtered = filtered.filter(
-        (skill) => skill.source === 'global-universal' || skill.source === 'global-claude'
-      );
+      filtered = filtered.filter((skill) => {
+        // If skill has multiple installations, check if any are global
+        if (skill.installedLocations && skill.installedLocations.length > 0) {
+          return skill.installedLocations.some(
+            (loc) => loc.source === 'global-universal' || loc.source === 'global-claude'
+          );
+        }
+        // Otherwise check the primary source
+        return skill.source === 'global-universal' || skill.source === 'global-claude';
+      });
     }
 
     // Filter by search query
@@ -120,10 +145,11 @@ export const SkillsListPanel: React.FC<SkillsListPanelProps> = ({
     }
   };
 
-  const handleRefresh = async () => {
+  const handleRefresh = () => {
     setIsRefreshing(true);
 
     // Emit refresh event so parent can handle filesystem rescans, etc.
+    // The host will update the filetree, which will trigger automatic reload via useEffect
     if (events) {
       events.emit({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -134,11 +160,10 @@ export const SkillsListPanel: React.FC<SkillsListPanelProps> = ({
       });
     }
 
-    try {
-      await refreshSkills();
-    } finally {
+    // Show refresh animation for a brief period to provide visual feedback
+    setTimeout(() => {
       setIsRefreshing(false);
-    }
+    }, 800);
   };
 
   return (
@@ -270,31 +295,33 @@ export const SkillsListPanel: React.FC<SkillsListPanelProps> = ({
             )}
           </div>
 
-          {/* Refresh button */}
-          <button
-            onClick={handleRefresh}
-            disabled={isRefreshing || isLoading}
-            style={{
-              background: theme.colors.backgroundSecondary,
-              border: `1px solid ${theme.colors.border}`,
-              borderRadius: theme.radii[1],
-              padding: '8px',
-              cursor: isRefreshing ? 'wait' : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'all 0.2s ease',
-            }}
-            title="Refresh skills"
-          >
-            <RefreshCw
-              size={16}
-              color={theme.colors.textSecondary}
+          {/* Refresh button - only show if host supports refresh */}
+          {supportsRefresh && (
+            <button
+              onClick={handleRefresh}
+              disabled={isRefreshing || isLoading}
               style={{
-                animation: isRefreshing ? 'spin 1s linear infinite' : 'none',
+                background: theme.colors.backgroundSecondary,
+                border: `1px solid ${theme.colors.border}`,
+                borderRadius: theme.radii[1],
+                padding: '8px',
+                cursor: isRefreshing || isLoading ? 'default' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.2s ease',
               }}
-            />
-          </button>
+              title="Refresh skills"
+            >
+              <RefreshCw
+                size={16}
+                color={theme.colors.textSecondary}
+                style={{
+                  animation: isRefreshing ? 'spin 1s linear infinite' : 'none',
+                }}
+              />
+            </button>
+          )}
         </div>
       </div>
 
@@ -308,28 +335,9 @@ export const SkillsListPanel: React.FC<SkillsListPanelProps> = ({
           }}
         >
           <button
-            onClick={() => setSkillFilter('all')}
-            style={{
-              padding: '8px 16px',
-              fontSize: theme.fontSizes[1],
-              fontFamily: theme.fonts.body,
-              border: `1px solid ${skillFilter === 'all' ? theme.colors.primary : theme.colors.border}`,
-              borderRadius: theme.radii[1],
-              background: skillFilter === 'all' ? `${theme.colors.primary}15` : theme.colors.backgroundSecondary,
-              color: skillFilter === 'all' ? theme.colors.primary : theme.colors.text,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              fontWeight: skillFilter === 'all' ? 600 : 400,
-              transition: 'all 0.2s ease',
-            }}
-          >
-            All Skills
-          </button>
-          <button
             onClick={() => setSkillFilter('project')}
             style={{
+              flex: 1,
               padding: '8px 16px',
               fontSize: theme.fontSizes[1],
               fontFamily: theme.fonts.body,
@@ -340,6 +348,7 @@ export const SkillsListPanel: React.FC<SkillsListPanelProps> = ({
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
+              justifyContent: 'center',
               gap: '6px',
               fontWeight: skillFilter === 'project' ? 600 : 400,
               transition: 'all 0.2s ease',
@@ -350,6 +359,7 @@ export const SkillsListPanel: React.FC<SkillsListPanelProps> = ({
           <button
             onClick={() => setSkillFilter('global')}
             style={{
+              flex: 1,
               padding: '8px 16px',
               fontSize: theme.fontSizes[1],
               fontFamily: theme.fonts.body,
@@ -360,6 +370,7 @@ export const SkillsListPanel: React.FC<SkillsListPanelProps> = ({
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
+              justifyContent: 'center',
               gap: '6px',
               fontWeight: skillFilter === 'global' ? 600 : 400,
               transition: 'all 0.2s ease',
@@ -452,6 +463,7 @@ export const SkillsListPanel: React.FC<SkillsListPanelProps> = ({
                 skill={skill}
                 onClick={handleSkillClick}
                 isSelected={selectedSkillId === skill.id}
+                filterContext={skillFilter}
               />
             ))}
           </div>

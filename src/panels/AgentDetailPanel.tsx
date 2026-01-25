@@ -7,6 +7,7 @@ import { useTheme } from '@principal-ade/industry-theme';
 import { usePanelFocusListener } from '@principal-ade/panel-layouts';
 import { BookOpen, Bot, FileText, Wrench, Zap, Code2 } from 'lucide-react';
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface AgentDetailPanelProps extends PanelComponentProps {}
 
 type SelectedItem =

@@ -388,38 +388,16 @@ export const WithSearch: Story = {
 };
 
 /**
- * Browse mode - for browsing GitHub repositories
- * Shows "Git Repo" instead of "Project" in filter
+ * With refresh button enabled
+ * Shows the refresh button when host supports refresh events
  */
-export const BrowseMode: Story = {
+export const WithRefresh: Story = {
   render: () => {
     const mockSlices = new Map<string, DataSlice>();
     mockSlices.set('fileTree', {
       scope: 'repository',
       name: 'fileTree',
       data: mockFileTreeWithSkills,
-      loading: false,
-      error: null,
-      refresh: async () => {},
-    });
-
-    // Mock some global skills
-    const mockGlobalSkills = [
-      {
-        name: 'brand-guidelines',
-        path: '/Users/developer/.agent/skills/brand-guidelines/SKILL.md',
-        content: createSkillContent(
-          'Brand Guidelines',
-          'Apply brand guidelines and style standards to content',
-          ['Ensure brand consistency', 'Apply color schemes', 'Maintain typography standards']
-        ),
-      },
-    ];
-
-    mockSlices.set('globalSkills', {
-      scope: 'workspace',
-      name: 'globalSkills',
-      data: { skills: mockGlobalSkills },
       loading: false,
       error: null,
       refresh: async () => {},
@@ -434,89 +412,7 @@ export const BrowseMode: Story = {
           },
         } as any}
       >
-        {(props) => <SkillsListPanel {...props} browseMode={true} />}
-      </MockPanelProvider>
-    );
-  },
-};
-
-/**
- * Browse mode with no repository loaded
- * Filters should be hidden
- */
-export const BrowseModeNoRepo: Story = {
-  render: () => {
-    const mockSlices = new Map<string, DataSlice>();
-
-    // No fileTree data
-    mockSlices.set('fileTree', {
-      scope: 'repository',
-      name: 'fileTree',
-      data: null,
-      loading: false,
-      error: null,
-      refresh: async () => {},
-    });
-
-    // Only global skills
-    const mockGlobalSkills = [
-      {
-        name: 'brand-guidelines',
-        path: '/Users/developer/.agent/skills/brand-guidelines/SKILL.md',
-        content: createSkillContent(
-          'Brand Guidelines',
-          'Apply brand guidelines and style standards to content',
-          ['Ensure brand consistency', 'Apply color schemes', 'Maintain typography standards']
-        ),
-      },
-      {
-        name: 'meeting-summarizer',
-        path: '/Users/developer/.claude/skills/meeting-summarizer/SKILL.md',
-        content: createSkillContent(
-          'Meeting Summarizer',
-          'Summarize meeting notes and extract action items',
-          ['Extract key decisions', 'Identify action items', 'Generate meeting summaries']
-        ),
-      },
-    ];
-
-    mockSlices.set('globalSkills', {
-      scope: 'workspace',
-      name: 'globalSkills',
-      data: { skills: mockGlobalSkills },
-      loading: false,
-      error: null,
-      refresh: async () => {},
-    });
-
-    return (
-      <MockPanelProvider
-        contextOverrides={{
-          slices: mockSlices,
-          adapters: {
-            fileSystem: {
-              readFile: async (path: string) => {
-                if (path.includes('brand-guidelines')) {
-                  return createSkillContent(
-                    'Brand Guidelines',
-                    'Apply brand guidelines and style standards to content',
-                    ['Ensure brand consistency', 'Apply color schemes', 'Maintain typography standards']
-                  );
-                }
-                if (path.includes('meeting-summarizer')) {
-                  return createSkillContent(
-                    'Meeting Summarizer',
-                    'Summarize meeting notes and extract action items',
-                    ['Extract key decisions', 'Identify action items', 'Generate meeting summaries']
-                  );
-                }
-                throw new Error(`File not found: ${path}`);
-              },
-            },
-          },
-        } as any}
-      >
-        {(props) => <SkillsListPanel {...props} browseMode={true} />}
+        {(props) => <SkillsListPanel {...props} supportsRefresh={true} />}
       </MockPanelProvider>
     );
   },
@@ -1178,6 +1074,126 @@ export const MultipleLocations: Story = {
           slices: mockSlices,
           adapters: {
             fileSystem: multiAdapter,
+          },
+        } as any}
+      >
+        {(props) => <SkillsListPanel {...props} />}
+      </MockPanelProvider>
+    );
+  },
+};
+
+/**
+ * Filter-based path copying
+ * When a skill exists in both project and global, the copied path depends on the active filter:
+ * - Project filter active → copies project installation path
+ * - Global filter active → copies global installation path
+ *
+ * Try switching between Project and Global filters and copying the path of "Legal Review"
+ */
+export const FilterBasedPathCopy: Story = {
+  render: () => {
+    const duplicateSkillsTree = builder.build({
+      files: [
+        '.agent/skills/legal-review/SKILL.md',
+        '.agent/skills/legal-review/.metadata.json',
+        'src/index.ts',
+      ],
+      rootPath: '/Users/developer/my-project',
+    });
+
+    const pathCopyAdapter = {
+      readFile: async (path: string) => {
+        if (path.includes('legal-review/SKILL.md')) {
+          return createSkillContentWithFrontmatter(
+            'Legal Review',
+            'Review contracts and legal documents for potential issues and compliance',
+            [
+              'Identify contractual obligations and liabilities',
+              'Check for regulatory compliance',
+              'Flag ambiguous or problematic clauses',
+            ]
+          );
+        }
+        if (path.includes('legal-review/.metadata.json')) {
+          return JSON.stringify({
+            owner: 'skills-org',
+            repo: 'legal-skills',
+            skillPath: 'legal-review',
+            sha: 'abc123def456',
+            installedFrom: 'https://github.com/skills-org/legal-skills',
+            installedAt: '2024-01-15T10:30:00Z',
+            destination: 'project-universal',
+          });
+        }
+        throw new Error(`File not found: ${path}`);
+      },
+    };
+
+    // Mock global skills with SAME metadata (will be deduplicated)
+    const mockGlobalSkills = [
+      {
+        id: '/Users/developer/.agent/skills/legal-review/SKILL.md',
+        name: 'legal review',
+        path: '/Users/developer/.agent/skills/legal-review/SKILL.md',
+        description: 'Review contracts and legal documents for potential issues and compliance',
+        skillFolderPath: '/Users/developer/.agent/skills/legal-review',
+        source: 'global-universal' as const,
+        priority: 2 as const,
+        hasScripts: false,
+        hasReferences: false,
+        hasAssets: false,
+        content: createSkillContentWithFrontmatter(
+          'Legal Review',
+          'Review contracts and legal documents for potential issues and compliance',
+          [
+            'Identify contractual obligations and liabilities',
+            'Check for regulatory compliance',
+            'Flag ambiguous or problematic clauses',
+          ]
+        ),
+        metadata: {
+          owner: 'skills-org',
+          repo: 'legal-skills',
+          skillPath: 'legal-review',
+          sha: 'abc123def456', // Same SHA as project version
+          installedFrom: 'https://github.com/skills-org/legal-skills',
+          installedAt: '2024-01-01T08:00:00Z', // Older installation
+          destination: 'global-universal',
+        },
+        frontmatterValidation: {
+          isValid: true,
+          hasStructure: true,
+          missingFields: [],
+        },
+      },
+    ];
+
+    const mockSlices = new Map<string, DataSlice>();
+    mockSlices.set('fileTree', {
+      scope: 'repository',
+      name: 'fileTree',
+      data: duplicateSkillsTree,
+      loading: false,
+      error: null,
+      refresh: async () => {},
+    });
+
+    mockSlices.set('globalSkills', {
+      scope: 'workspace',
+      name: 'globalSkills',
+      data: { skills: mockGlobalSkills },
+      loading: false,
+      error: null,
+      refresh: async () => {},
+    });
+
+    return (
+      <MockPanelProvider
+        contextOverrides={{
+          slices: mockSlices,
+          adapters: {
+            fileSystem: pathCopyAdapter,
           },
         } as any}
       >

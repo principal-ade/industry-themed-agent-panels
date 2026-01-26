@@ -3,14 +3,15 @@ import { SkillsBrowsePanel } from './panels/SkillsBrowsePanel';
 import { SkillDetailPanel, type SkillDetailPanelProps } from './panels/SkillDetailPanel';
 import { AgentsListPanel } from './panels/AgentsListPanel';
 import { AgentDetailPanel } from './panels/AgentDetailPanel';
+import { AgenticResourcesPanel } from './panels/AgenticResourcesPanel';
 import type { PanelDefinition, PanelContextValue } from './types';
 import type { Skill } from './panels/skills/hooks/useSkillsData';
 
 // Export component props types for external use
 export type { SkillsListPanelProps, SkillDetailPanelProps, Skill };
 
-// Export the SkillsBrowsePanel component for direct use
-export { SkillsBrowsePanel };
+// Export standalone components for direct use
+export { SkillsBrowsePanel, AgenticResourcesPanel };
 
 /**
  * Export array of panel definitions.
@@ -150,6 +151,33 @@ export const panels: PanelDefinition[] = [
     onUnmount: async (_context: PanelContextValue) => {
       // eslint-disable-next-line no-console
       console.log('Agent Detail Panel unmounting');
+    },
+  },
+  {
+    metadata: {
+      id: 'industry-theme.agentic-resources',
+      name: 'Agentic Resources',
+      icon: '🔧',
+      version: '0.1.0',
+      author: 'Principal ADE',
+      description: 'Unified panel for both Agents and Skills with mode toggle',
+      slices: ['fileTree', 'globalAgents', 'globalSubagents', 'globalSkills'], // Data slices this panel depends on
+    },
+    component: AgenticResourcesPanel,
+
+    // Optional: Called when this specific panel is mounted
+    onMount: async (context: PanelContextValue) => {
+      // eslint-disable-next-line no-console
+      console.log(
+        'Agentic Resources Panel mounted',
+        context.currentScope.repository?.path
+      );
+    },
+
+    // Optional: Called when this specific panel is unmounted
+    onUnmount: async (_context: PanelContextValue) => {
+      // eslint-disable-next-line no-console
+      console.log('Agentic Resources Panel unmounting');
     },
   },
 ];

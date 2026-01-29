@@ -44,9 +44,8 @@ export const SkillsBrowsePanel: React.FC<SkillsBrowsePanelProps> = ({
   const fileTreeSlice = context.getSlice<any>('fileTree');
   const fileTree = fileTreeSlice?.data;
   const sourceInfo = fileTree?.metadata?.sourceInfo;
-  const repoDisplayName = sourceInfo?.owner && sourceInfo?.repo
-    ? `${sourceInfo.owner}/${sourceInfo.repo}`
-    : null;
+  const owner = sourceInfo?.owner;
+  const repo = sourceInfo?.repo;
 
   // Listen for panel focus events
   usePanelFocusListener('skills-browse', events, () => panelRef.current?.focus());
@@ -158,29 +157,51 @@ export const SkillsBrowsePanel: React.FC<SkillsBrowsePanelProps> = ({
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <h2
-            style={{
-              margin: 0,
-              fontSize: theme.fontSizes[4],
-              color: theme.colors.text,
-            }}
-          >
-            {repoDisplayName ? (
-              <a
-                href={`https://github.com/${repoDisplayName}`}
-                target="_blank"
-                rel="noopener noreferrer"
+          {owner && repo ? (
+            <a
+              href={`https://github.com/${owner}/${repo}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                textDecoration: 'none',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '2px',
+              }}
+            >
+              <h2
                 style={{
-                  color: 'inherit',
-                  textDecoration: 'none',
+                  margin: 0,
+                  fontSize: theme.fontSizes[4],
+                  color: theme.colors.text,
+                  fontFamily: theme.fonts.monospace,
+                  lineHeight: 1.2,
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.textDecoration = 'underline')}
+                onMouseLeave={(e) => (e.currentTarget.style.textDecoration = 'none')}
+              >
+                {repo}
+              </h2>
+              <div
+                style={{
+                  fontSize: theme.fontSizes[1],
+                  color: theme.colors.textSecondary,
                   fontFamily: theme.fonts.monospace,
                 }}
                 onMouseEnter={(e) => (e.currentTarget.style.textDecoration = 'underline')}
                 onMouseLeave={(e) => (e.currentTarget.style.textDecoration = 'none')}
               >
-                {repoDisplayName}
-              </a>
-            ) : (
+                {owner}
+              </div>
+            </a>
+          ) : (
+            <h2
+              style={{
+                margin: 0,
+                fontSize: theme.fontSizes[4],
+                color: theme.colors.text,
+              }}
+            >
               <a
                 href="https://agentskills.io/"
                 target="_blank"
@@ -194,8 +215,8 @@ export const SkillsBrowsePanel: React.FC<SkillsBrowsePanelProps> = ({
               >
                 Browse Skills
               </a>
-            )}
-          </h2>
+            </h2>
+          )}
 
           {!isLoading && (
             <span

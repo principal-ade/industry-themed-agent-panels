@@ -71,6 +71,8 @@ export interface SkillMarkdownProps {
     /** Optional callback when uninstall is requested */
     onUninstall?: () => void;
   };
+  /** Hide the Edit and MDX Editor buttons (default: false) */
+  hideEditButtons?: boolean;
 }
 
 /**
@@ -272,6 +274,7 @@ const SkillMetadataSection: React.FC<{
   skill?: Skill;
   actions?: PanelActions;
   events?: PanelEventEmitter;
+  hideEditButtons?: boolean;
 }> = ({
   metadata,
   theme,
@@ -279,6 +282,7 @@ const SkillMetadataSection: React.FC<{
   skill,
   actions,
   events,
+  hideEditButtons,
 }) => {
   const [expandedSections, setExpandedSections] = React.useState<{
     scripts: boolean;
@@ -469,7 +473,7 @@ const SkillMetadataSection: React.FC<{
               </div>
 
               {/* Action Buttons */}
-              {events && skill?.path && (
+              {!hideEditButtons && events && skill?.path && (
                 <div style={{
                   display: 'flex',
                   gap: theme.space[2],
@@ -704,6 +708,7 @@ export const SkillMarkdown: React.FC<SkillMarkdownProps> = ({
   actions,
   events,
   installConfig,
+  hideEditButtons = false,
 }) => {
   const [parsed, setParsed] = React.useState<PartialParsedSkill | null>(null);
   const [headers, setHeaders] = React.useState<MarkdownHeader[]>([]);
@@ -1046,7 +1051,7 @@ export const SkillMarkdown: React.FC<SkillMarkdownProps> = ({
       )}
 
       <div style={{ padding: theme.space[3], paddingBottom: 0 }}>
-        <SkillMetadataSection metadata={parsed.metadata} theme={theme} structure={structure} skill={skill} actions={actions} events={events} />
+        <SkillMetadataSection metadata={parsed.metadata} theme={theme} structure={structure} skill={skill} actions={actions} events={events} hideEditButtons={hideEditButtons} />
       </div>
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
         <SkillSidebar

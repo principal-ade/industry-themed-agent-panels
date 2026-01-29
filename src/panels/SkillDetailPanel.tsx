@@ -25,6 +25,10 @@ export interface SkillDetailPanelProps extends PanelComponentProps {
    * Install button configuration to pass through to SkillMarkdown
    */
   installConfig?: SkillMarkdownProps['installConfig'];
+  /**
+   * Hide the Edit and MDX Editor buttons (default: false)
+   */
+  hideEditButtons?: boolean;
 }
 
 export const SkillDetailPanel: React.FC<SkillDetailPanelProps> = ({
@@ -34,6 +38,7 @@ export const SkillDetailPanel: React.FC<SkillDetailPanelProps> = ({
   selectedSkillId: selectedSkillIdProp,
   skill: skillProp,
   installConfig,
+  hideEditButtons = false,
 }) => {
   const { theme } = useTheme();
   const { skills, isLoading, error } = useSkillsData({ context });
@@ -203,6 +208,7 @@ export const SkillDetailPanel: React.FC<SkillDetailPanelProps> = ({
               actions={actions}
               events={events}
               installConfig={installConfig}
+              hideEditButtons={hideEditButtons}
             />
           </div>
         </>

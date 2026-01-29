@@ -117,7 +117,7 @@ export const SkillSidebar: React.FC<SkillSidebarProps> = ({
   skill,
 }) => {
   const [activeTab, setActiveTab] = React.useState<SidebarTab>('toc');
-  const [isCollapsed, setIsCollapsed] = React.useState(false);
+  const [isCollapsed, setIsCollapsed] = React.useState(true);
 
   const hasMetadata =
     metadata.compatibility ||

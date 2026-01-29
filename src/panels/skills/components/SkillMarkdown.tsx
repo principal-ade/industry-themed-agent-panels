@@ -10,7 +10,7 @@ import {
   type PartialSkillMetadata,
   type ValidationWarning,
 } from '@principal-ade/markdown-utils';
-import { Code, BookOpen, Package, Globe, Folder, AlertTriangle, Search, X, ChevronUp, ChevronDown, ExternalLink, FileEdit } from 'lucide-react';
+import { Code, BookOpen, Package, Globe, Folder, AlertTriangle, Search, X, ChevronUp, ChevronDown, ExternalLink, FileEdit, Download, Check } from 'lucide-react';
 import React from 'react';
 
 import { IndustryMarkdownSlide } from 'themed-markdown';
@@ -52,6 +52,25 @@ export interface SkillMarkdownProps {
   actions?: PanelActions;
   /** Optional event emitter for panel communication */
   events?: PanelEventEmitter;
+  /** Install button configuration */
+  installConfig?: {
+    /** Whether the skill is currently installed */
+    isInstalled: boolean;
+    /** Directory IDs where the skill is installed */
+    installedDirectoryIds?: string[];
+    /** GitHub source information for the skill */
+    githubSource?: {
+      owner: string;
+      repo: string;
+      branch: string;
+      skillPath: string;
+      currentSha?: string;
+    };
+    /** Callback when install button is clicked */
+    onInstall: () => void;
+    /** Optional callback when uninstall is requested */
+    onUninstall?: () => void;
+  };
 }
 
 /**
@@ -684,6 +703,7 @@ export const SkillMarkdown: React.FC<SkillMarkdownProps> = ({
   skill,
   actions,
   events,
+  installConfig,
 }) => {
   const [parsed, setParsed] = React.useState<PartialParsedSkill | null>(null);
   const [headers, setHeaders] = React.useState<MarkdownHeader[]>([]);
@@ -919,6 +939,112 @@ export const SkillMarkdown: React.FC<SkillMarkdownProps> = ({
           onClose={handleCloseSearch}
         />
       )}
+
+      {/* Install Toolbar */}
+      {installConfig && (
+        <div
+          style={{
+            padding: '12px 16px',
+            background: theme.colors.backgroundSecondary,
+            borderBottom: `1px solid ${theme.colors.border}`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '12px',
+            flexShrink: 0,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+            {installConfig.githubSource && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: theme.fontSizes[1], color: theme.colors.textSecondary }}>
+                <Globe size={14} />
+                <span style={{ fontFamily: theme.fonts.monospace }}>
+                  {installConfig.githubSource.owner}/{installConfig.githubSource.repo}
+                </span>
+                <span style={{ color: theme.colors.border }}>•</span>
+                <span>{installConfig.githubSource.branch}</span>
+              </div>
+            )}
+          </div>
+
+          {installConfig.isInstalled ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '6px 12px',
+                  borderRadius: theme.radii[1],
+                  background: '#16a34a15',
+                  border: '1px solid #16a34a30',
+                  color: '#16a34a',
+                  fontSize: theme.fontSizes[1],
+                  fontWeight: 500,
+                }}
+              >
+                <Check size={14} />
+                <span>Installed</span>
+              </div>
+              {installConfig.onUninstall && (
+                <button
+                  onClick={installConfig.onUninstall}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: theme.radii[1],
+                    background: 'transparent',
+                    border: `1px solid ${theme.colors.border}`,
+                    color: theme.colors.textSecondary,
+                    fontSize: theme.fontSizes[1],
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = theme.colors.backgroundSecondary;
+                    e.currentTarget.style.borderColor = theme.colors.error;
+                    e.currentTarget.style.color = theme.colors.error;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent';
+                    e.currentTarget.style.borderColor = theme.colors.border;
+                    e.currentTarget.style.color = theme.colors.textSecondary;
+                  }}
+                >
+                  Uninstall
+                </button>
+              )}
+            </div>
+          ) : (
+            <button
+              onClick={installConfig.onInstall}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '8px 16px',
+                borderRadius: theme.radii[1],
+                background: theme.colors.primary,
+                border: 'none',
+                color: theme.colors.background,
+                fontSize: theme.fontSizes[1],
+                fontWeight: 500,
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.opacity = '0.85';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.opacity = '1';
+              }}
+            >
+              <Download size={14} />
+              <span>Install Skill</span>
+            </button>
+          )}
+        </div>
+      )}
+
       <div style={{ padding: theme.space[3], paddingBottom: 0 }}>
         <SkillMetadataSection metadata={parsed.metadata} theme={theme} structure={structure} skill={skill} actions={actions} events={events} />
       </div>

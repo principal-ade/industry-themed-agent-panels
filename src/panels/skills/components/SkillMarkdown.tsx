@@ -970,6 +970,21 @@ export const SkillMarkdown: React.FC<SkillMarkdownProps> = ({
                 </span>
                 <span style={{ color: theme.colors.border }}>•</span>
                 <span>{installConfig.githubSource.branch}</span>
+                {installConfig.githubSource.currentSha && (
+                  <>
+                    <span style={{ color: theme.colors.border }}>•</span>
+                    <span
+                      style={{
+                        fontFamily: theme.fonts.monospace,
+                        fontSize: theme.fontSizes[0],
+                        color: theme.colors.textSecondary,
+                      }}
+                      title={installConfig.githubSource.currentSha}
+                    >
+                      {installConfig.githubSource.currentSha.substring(0, 7)}
+                    </span>
+                  </>
+                )}
               </div>
             )}
           </div>

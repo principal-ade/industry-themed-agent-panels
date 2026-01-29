@@ -1,5 +1,6 @@
 import { SkillsListPanel, type SkillsListPanelProps } from './panels/SkillsListPanel';
 import { SkillsBrowsePanel } from './panels/SkillsBrowsePanel';
+import { GlobalSkillsPanel, type GlobalSkillsPanelProps } from './panels/GlobalSkillsPanel';
 import { SkillDetailPanel, type SkillDetailPanelProps } from './panels/SkillDetailPanel';
 import { AgentsListPanel } from './panels/AgentsListPanel';
 import { AgentDetailPanel } from './panels/AgentDetailPanel';
@@ -8,10 +9,10 @@ import type { PanelDefinition, PanelContextValue } from './types';
 import type { Skill } from './panels/skills/hooks/useSkillsData';
 
 // Export component props types for external use
-export type { SkillsListPanelProps, SkillDetailPanelProps, Skill };
+export type { SkillsListPanelProps, SkillDetailPanelProps, GlobalSkillsPanelProps, Skill };
 
 // Export standalone components for direct use
-export { SkillsBrowsePanel, AgenticResourcesPanel };
+export { SkillsBrowsePanel, GlobalSkillsPanel, AgenticResourcesPanel };
 
 /**
  * Export array of panel definitions.
@@ -70,6 +71,33 @@ export const panels: PanelDefinition[] = [
     onUnmount: async (_context: PanelContextValue) => {
       // eslint-disable-next-line no-console
       console.log('Skills Browse Panel unmounting');
+    },
+  },
+  {
+    metadata: {
+      id: 'industry-theme.global-skills',
+      name: 'Global Skills',
+      icon: '🌐',
+      version: '0.1.0',
+      author: 'Principal ADE',
+      description: 'Display only global Agent Skills (no project skills)',
+      slices: ['fileTree', 'globalSkills'], // Depends on fileTree and globalSkills
+    },
+    component: GlobalSkillsPanel,
+
+    // Optional: Called when this specific panel is mounted
+    onMount: async (context: PanelContextValue) => {
+      // eslint-disable-next-line no-console
+      console.log(
+        'Global Skills Panel mounted',
+        context.currentScope.repository?.path
+      );
+    },
+
+    // Optional: Called when this specific panel is unmounted
+    onUnmount: async (_context: PanelContextValue) => {
+      // eslint-disable-next-line no-console
+      console.log('Global Skills Panel unmounting');
     },
   },
   {

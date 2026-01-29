@@ -47,6 +47,15 @@ export const SkillsBrowsePanel: React.FC<SkillsBrowsePanelProps> = ({
   const owner = sourceInfo?.owner;
   const repo = sourceInfo?.repo;
 
+  // Get global skills to check if skills are already installed
+  const globalSkillsSlice = context.getSlice<any>('globalSkills');
+  const globalSkills = globalSkillsSlice?.data?.skills || [];
+
+  // Create a Set of installed skill names for fast lookup
+  const installedSkillNames = useMemo(() => {
+    return new Set(globalSkills.map((skill: any) => skill.name));
+  }, [globalSkills]);
+
   // Listen for panel focus events
   usePanelFocusListener('skills-browse', events, () => panelRef.current?.focus());
 
@@ -407,6 +416,7 @@ export const SkillsBrowsePanel: React.FC<SkillsBrowsePanelProps> = ({
                 skill={skill}
                 onClick={handleSkillClick}
                 isSelected={selectedSkillId === skill.id}
+                isInstalled={installedSkillNames.has(skill.name)}
               />
             ))}
           </div>

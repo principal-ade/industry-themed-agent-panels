@@ -12,6 +12,11 @@ interface SkillCardProps {
    * Used to determine which path to copy when skill has multiple installations
    */
   filterContext?: 'project' | 'global';
+  /**
+   * Whether this skill is already installed globally
+   * Used in browse mode to show installation status
+   */
+  isInstalled?: boolean;
 }
 
 /**
@@ -88,6 +93,7 @@ export const SkillCard: React.FC<SkillCardProps> = ({
   onClick,
   isSelected = false,
   filterContext,
+  isInstalled = false,
 }) => {
   const { theme } = useTheme();
   const sourceConfig = getSourceConfig(skill.source);
@@ -199,6 +205,29 @@ export const SkillCard: React.FC<SkillCardProps> = ({
               >
                 <sourceConfig.icon size={10} />
                 <span>{sourceConfig.label}</span>
+              </div>
+            )}
+
+            {/* Installed badge - show when skill is already installed globally */}
+            {isInstalled && (
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: '2px 6px',
+                  borderRadius: theme.radii[1],
+                  backgroundColor: '#16a34a15', // green
+                  border: `1px solid #16a34a30`,
+                  fontSize: theme.fontSizes[0],
+                  color: '#16a34a',
+                  fontWeight: 500,
+                  width: 'fit-content',
+                }}
+                title="This skill is already installed globally"
+              >
+                <Package size={10} />
+                <span>Installed</span>
               </div>
             )}
 

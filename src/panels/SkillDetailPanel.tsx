@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import type { PanelComponentProps } from '../types';
 import { useSkillsData } from './skills/hooks/useSkillsData';
 import type { Skill } from './skills/hooks/useSkillsData';
-import { SkillMarkdown } from './skills/components/SkillMarkdown';
+import { SkillMarkdown, type SkillMarkdownProps } from './skills/components/SkillMarkdown';
 import type { PartialParsedSkill, ValidationWarning } from '@principal-ade/markdown-utils';
 import { useTheme } from '@principal-ade/industry-theme';
 import { usePanelFocusListener } from '@principal-ade/panel-layouts';
@@ -21,6 +21,10 @@ export interface SkillDetailPanelProps extends PanelComponentProps {
    * This provides better performance when the skill data is already available.
    */
   skill?: Skill | null;
+  /**
+   * Install button configuration to pass through to SkillMarkdown
+   */
+  installConfig?: SkillMarkdownProps['installConfig'];
 }
 
 export const SkillDetailPanel: React.FC<SkillDetailPanelProps> = ({
@@ -29,6 +33,7 @@ export const SkillDetailPanel: React.FC<SkillDetailPanelProps> = ({
   actions,
   selectedSkillId: selectedSkillIdProp,
   skill: skillProp,
+  installConfig,
 }) => {
   const { theme } = useTheme();
   const { skills, isLoading, error } = useSkillsData({ context });
@@ -197,6 +202,7 @@ export const SkillDetailPanel: React.FC<SkillDetailPanelProps> = ({
               skill={skill}
               actions={actions}
               events={events}
+              installConfig={installConfig}
             />
           </div>
         </>

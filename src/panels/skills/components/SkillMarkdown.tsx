@@ -56,6 +56,8 @@ export interface SkillMarkdownProps {
   installConfig?: {
     /** Whether the skill is currently installed */
     isInstalled: boolean;
+    /** Whether an update is available (installed SHA differs from current SHA) */
+    hasUpdate?: boolean;
     /** Directory IDs where the skill is installed */
     installedDirectoryIds?: string[];
     /** GitHub source information for the skill */
@@ -974,23 +976,67 @@ export const SkillMarkdown: React.FC<SkillMarkdownProps> = ({
 
           {installConfig.isInstalled ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '6px 12px',
-                  borderRadius: theme.radii[1],
-                  background: '#16a34a15',
-                  border: '1px solid #16a34a30',
-                  color: '#16a34a',
-                  fontSize: theme.fontSizes[1],
-                  fontWeight: 500,
-                }}
-              >
-                <Check size={14} />
-                <span>Installed</span>
-              </div>
+              {installConfig.hasUpdate ? (
+                <>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '6px 12px',
+                      borderRadius: theme.radii[1],
+                      background: '#f59e0b15',
+                      border: '1px solid #f59e0b30',
+                      color: '#f59e0b',
+                      fontSize: theme.fontSizes[1],
+                      fontWeight: 500,
+                    }}
+                  >
+                    <Download size={14} />
+                    <span>Update Available</span>
+                  </div>
+                  <button
+                    onClick={installConfig.onInstall}
+                    style={{
+                      padding: '6px 12px',
+                      borderRadius: theme.radii[1],
+                      background: theme.colors.primary,
+                      border: 'none',
+                      color: theme.colors.background,
+                      fontSize: theme.fontSizes[1],
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.opacity = '0.85';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.opacity = '1';
+                    }}
+                  >
+                    Update
+                  </button>
+                </>
+              ) : (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '6px 12px',
+                    borderRadius: theme.radii[1],
+                    background: '#16a34a15',
+                    border: '1px solid #16a34a30',
+                    color: '#16a34a',
+                    fontSize: theme.fontSizes[1],
+                    fontWeight: 500,
+                  }}
+                >
+                  <Check size={14} />
+                  <span>Installed</span>
+                </div>
+              )}
               {installConfig.onUninstall && (
                 <button
                   onClick={installConfig.onUninstall}

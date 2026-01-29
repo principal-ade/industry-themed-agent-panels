@@ -40,6 +40,14 @@ export const SkillsBrowsePanel: React.FC<SkillsBrowsePanelProps> = ({
   // Load skills data (GitHub repo only, no global skills)
   const { skills, isLoading, error, refreshSkills } = useSkillsBrowseData({ context });
 
+  // Get GitHub repository info from context
+  const fileTreeSlice = context.getSlice<any>('fileTree');
+  const fileTree = fileTreeSlice?.data;
+  const sourceInfo = fileTree?.metadata?.sourceInfo;
+  const repoDisplayName = sourceInfo?.owner && sourceInfo?.repo
+    ? `${sourceInfo.owner}/${sourceInfo.repo}`
+    : null;
+
   // Listen for panel focus events
   usePanelFocusListener('skills-browse', events, () => panelRef.current?.focus());
 
@@ -157,19 +165,36 @@ export const SkillsBrowsePanel: React.FC<SkillsBrowsePanelProps> = ({
               color: theme.colors.text,
             }}
           >
-            <a
-              href="https://agentskills.io/"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                color: 'inherit',
-                textDecoration: 'none',
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.textDecoration = 'underline')}
-              onMouseLeave={(e) => (e.currentTarget.style.textDecoration = 'none')}
-            >
-              Browse Skills
-            </a>
+            {repoDisplayName ? (
+              <a
+                href={`https://github.com/${repoDisplayName}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  color: 'inherit',
+                  textDecoration: 'none',
+                  fontFamily: theme.fonts.monospace,
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.textDecoration = 'underline')}
+                onMouseLeave={(e) => (e.currentTarget.style.textDecoration = 'none')}
+              >
+                {repoDisplayName}
+              </a>
+            ) : (
+              <a
+                href="https://agentskills.io/"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  color: 'inherit',
+                  textDecoration: 'none',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.textDecoration = 'underline')}
+                onMouseLeave={(e) => (e.currentTarget.style.textDecoration = 'none')}
+              >
+                Browse Skills
+              </a>
+            )}
           </h2>
 
           {!isLoading && (

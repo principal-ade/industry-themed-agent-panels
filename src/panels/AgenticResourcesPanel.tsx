@@ -233,8 +233,11 @@ export const AgenticResourcesPanel: React.FC<PanelComponentProps> = ({
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
+      // Minimum animation duration for visual feedback
+      const minDelay = new Promise(resolve => setTimeout(resolve, 600));
+
       if (mode === 'agents') {
-        await Promise.all([refreshAgents(), refreshSubagents()]);
+        await Promise.all([refreshAgents(), refreshSubagents(), minDelay]);
       } else {
         // For skills, emit refresh event and let the host handle it
         if (events) {
@@ -245,8 +248,7 @@ export const AgenticResourcesPanel: React.FC<PanelComponentProps> = ({
             payload: {},
           });
         }
-        // Brief animation for visual feedback
-        setTimeout(() => {}, 800);
+        await minDelay;
       }
     } finally {
       setIsRefreshing(false);
@@ -339,27 +341,10 @@ export const AgenticResourcesPanel: React.FC<PanelComponentProps> = ({
           </button>
         </div>
 
-        {/* Count Badge - only show if there are items */}
-        {!isLoading && ((mode === 'agents' && allItems.length > 0) || (mode === 'skills' && skills.length > 0)) && (
-          <span
-            style={{
-              fontSize: theme.fontSizes[1],
-              color: theme.colors.textSecondary,
-              background: theme.colors.backgroundSecondary,
-              padding: '4px 10px',
-              borderRadius: theme.radii[1],
-            }}
-          >
-            {mode === 'agents'
-              ? `${filteredItems.length} ${filteredItems.length === 1 ? 'item' : 'items'}`
-              : `${filteredSkills.length} ${filteredSkills.length === 1 ? 'skill' : 'skills'}`}
-          </span>
-        )}
-
-        {/* Search and Refresh - only show if there are >= 5 items */}
-        {((mode === 'agents' && allItems.length >= 5) || (mode === 'skills' && skills.length >= 5)) && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: '1 1 200px', maxWidth: '400px' }}>
-            {/* Search input */}
+        {/* Search and Refresh */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: '1 1 200px', maxWidth: '400px' }}>
+          {/* Search input - only show if there are >= 5 items */}
+          {((mode === 'agents' && allItems.length >= 5) || (mode === 'skills' && skills.length >= 5)) && (
             <div
               style={{
                 position: 'relative',
@@ -419,34 +404,36 @@ export const AgenticResourcesPanel: React.FC<PanelComponentProps> = ({
                 </button>
               )}
             </div>
+          )}
 
-            {/* Refresh button */}
-            <button
-              onClick={handleRefresh}
-              disabled={isRefreshing || isLoading}
+          {/* Refresh button - always visible */}
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing || isLoading}
+            style={{
+              background: theme.colors.backgroundSecondary,
+              border: `1px solid ${theme.colors.border}`,
+              borderRadius: theme.radii[1],
+              padding: '8px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s ease',
+              marginLeft: 'auto',
+              opacity: isRefreshing ? 0.7 : 1,
+            }}
+            title={mode === 'agents' ? 'Refresh agents' : 'Refresh skills'}
+          >
+            <RefreshCw
+              size={16}
+              color={theme.colors.textSecondary}
               style={{
-                background: theme.colors.backgroundSecondary,
-                border: `1px solid ${theme.colors.border}`,
-                borderRadius: theme.radii[1],
-                padding: '8px',
-                cursor: isRefreshing ? 'wait' : 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'all 0.2s ease',
+                animation: isRefreshing ? 'spin 1s linear infinite' : 'none',
               }}
-              title={mode === 'agents' ? 'Refresh agents' : 'Refresh skills'}
-            >
-              <RefreshCw
-                size={16}
-                color={theme.colors.textSecondary}
-                style={{
-                  animation: isRefreshing ? 'spin 1s linear infinite' : 'none',
-                }}
-              />
-            </button>
-          </div>
-        )}
+            />
+          </button>
+        </div>
       </div>
 
       {/* Filter Toggle */}

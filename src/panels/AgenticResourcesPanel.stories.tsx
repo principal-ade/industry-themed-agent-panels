@@ -354,3 +354,210 @@ export const Loading: Story = {
     </MockPanelProvider>
   ),
 };
+
+const manySubagents: Subagent[] = [
+  {
+    id: '.claude/agents/code-reviewer.md',
+    name: 'code-reviewer',
+    path: '.claude/agents/code-reviewer.md',
+    content: `---
+name: code-reviewer
+description: Reviews code for quality and best practices
+tools: Read, Glob, Grep
+model: sonnet
+---
+
+You are a code reviewer. When invoked, analyze the code and provide specific, actionable feedback on quality, security, and best practices.`,
+    prompt: 'You are a code reviewer. When invoked, analyze the code and provide specific, actionable feedback on quality, security, and best practices.',
+    frontmatter: {
+      name: 'code-reviewer',
+      description: 'Reviews code for quality and best practices',
+      tools: 'Read, Glob, Grep',
+      model: 'sonnet',
+    },
+    source: 'project-claude',
+    priority: 1,
+  },
+  {
+    id: '.claude/agents/test-writer.md',
+    name: 'test-writer',
+    path: '.claude/agents/test-writer.md',
+    content: `---
+name: test-writer
+description: Writes comprehensive unit tests for code
+tools: Read, Write, Bash
+model: haiku
+permissionMode: acceptEdits
+---
+
+You are a test writing expert. When invoked, write comprehensive unit tests with good coverage and edge cases.`,
+    prompt: 'You are a test writing expert. When invoked, write comprehensive unit tests with good coverage and edge cases.',
+    frontmatter: {
+      name: 'test-writer',
+      description: 'Writes comprehensive unit tests for code',
+      tools: 'Read, Write, Bash',
+      model: 'haiku',
+      permissionMode: 'acceptEdits',
+    },
+    source: 'project-claude',
+    priority: 1,
+  },
+  {
+    id: '.claude/agents/refactor-assistant.md',
+    name: 'refactor-assistant',
+    path: '.claude/agents/refactor-assistant.md',
+    content: `---
+name: refactor-assistant
+description: Helps refactor code for better maintainability and performance
+tools: Read, Write, Glob, Grep, Bash
+model: opus
+permissionMode: bypassPermissions
+---
+
+You are a refactoring expert. Analyze code structure and suggest improvements for maintainability, readability, and performance.`,
+    prompt: 'You are a refactoring expert. Analyze code structure and suggest improvements for maintainability, readability, and performance.',
+    frontmatter: {
+      name: 'refactor-assistant',
+      description: 'Helps refactor code for better maintainability and performance',
+      tools: 'Read, Write, Glob, Grep, Bash',
+      model: 'opus',
+      permissionMode: 'bypassPermissions',
+    },
+    source: 'project-claude',
+    priority: 1,
+  },
+  {
+    id: '.claude/agents/doc-generator.md',
+    name: 'doc-generator',
+    path: '.claude/agents/doc-generator.md',
+    content: `---
+name: doc-generator
+description: Generates documentation from code
+tools: Read, Write, Glob
+model: haiku
+---
+
+You are a documentation expert. Generate clear, comprehensive documentation from source code including JSDoc comments, README files, and API docs.`,
+    prompt: 'You are a documentation expert. Generate clear, comprehensive documentation from source code including JSDoc comments, README files, and API docs.',
+    frontmatter: {
+      name: 'doc-generator',
+      description: 'Generates documentation from code',
+      tools: 'Read, Write, Glob',
+      model: 'haiku',
+    },
+    source: 'project-claude',
+    priority: 1,
+  },
+  {
+    id: '~/.claude/agents/security-auditor.md',
+    name: 'security-auditor',
+    path: '~/.claude/agents/security-auditor.md',
+    content: `---
+name: security-auditor
+description: Audits code for security vulnerabilities and OWASP compliance
+tools: Read, Glob, Grep, WebFetch
+model: opus
+---
+
+You are a security expert. Analyze code for vulnerabilities, check for OWASP Top 10 issues, and recommend security best practices.`,
+    prompt: 'You are a security expert. Analyze code for vulnerabilities, check for OWASP Top 10 issues, and recommend security best practices.',
+    frontmatter: {
+      name: 'security-auditor',
+      description: 'Audits code for security vulnerabilities and OWASP compliance',
+      tools: 'Read, Glob, Grep, WebFetch',
+      model: 'opus',
+    },
+    source: 'global-claude',
+    priority: 1,
+  },
+  {
+    id: '~/.claude/agents/api-designer.md',
+    name: 'api-designer',
+    path: '~/.claude/agents/api-designer.md',
+    content: `---
+name: api-designer
+description: Designs RESTful and GraphQL APIs following best practices
+tools: Read, Write
+model: sonnet
+---
+
+You are an API design expert. Help design clean, consistent, and well-documented APIs following REST or GraphQL best practices.`,
+    prompt: 'You are an API design expert. Help design clean, consistent, and well-documented APIs following REST or GraphQL best practices.',
+    frontmatter: {
+      name: 'api-designer',
+      description: 'Designs RESTful and GraphQL APIs following best practices',
+      tools: 'Read, Write',
+      model: 'sonnet',
+    },
+    source: 'global-claude',
+    priority: 1,
+  },
+  {
+    id: '~/.claude/agents/performance-optimizer.md',
+    name: 'performance-optimizer',
+    path: '~/.claude/agents/performance-optimizer.md',
+    content: `---
+name: performance-optimizer
+description: Analyzes and optimizes application performance
+tools: Read, Glob, Grep, Bash
+model: sonnet
+permissionMode: acceptEdits
+---
+
+You are a performance optimization expert. Profile applications, identify bottlenecks, and suggest optimizations for speed and resource usage.`,
+    prompt: 'You are a performance optimization expert. Profile applications, identify bottlenecks, and suggest optimizations for speed and resource usage.',
+    frontmatter: {
+      name: 'performance-optimizer',
+      description: 'Analyzes and optimizes application performance',
+      tools: 'Read, Glob, Grep, Bash',
+      model: 'sonnet',
+      permissionMode: 'acceptEdits',
+    },
+    source: 'global-claude',
+    priority: 1,
+  },
+];
+
+export const MultipleSubagents: Story = {
+  render: () => (
+    <MockPanelProvider
+      mockSlices={{
+        fileTree: {
+          allFiles: [
+            { name: 'AGENTS.md', relativePath: 'AGENTS.md', type: 'file' },
+            { name: 'code-reviewer.md', relativePath: '.claude/agents/code-reviewer.md', type: 'file' },
+            { name: 'test-writer.md', relativePath: '.claude/agents/test-writer.md', type: 'file' },
+            { name: 'refactor-assistant.md', relativePath: '.claude/agents/refactor-assistant.md', type: 'file' },
+            { name: 'doc-generator.md', relativePath: '.claude/agents/doc-generator.md', type: 'file' },
+            { name: 'security-auditor.md', relativePath: '~/.claude/agents/security-auditor.md', type: 'file' },
+            { name: 'api-designer.md', relativePath: '~/.claude/agents/api-designer.md', type: 'file' },
+            { name: 'performance-optimizer.md', relativePath: '~/.claude/agents/performance-optimizer.md', type: 'file' },
+          ] as any,
+          sha: 'mock-sha',
+        },
+      }}
+      mockAdapters={{
+        fileSystem: {
+          readFile: async (path: string) => {
+            if (path.includes('AGENTS.md')) {
+              return mockAgents[0].content;
+            }
+            const subagent = manySubagents.find(s => path.includes(s.name));
+            return subagent?.content || '';
+          },
+        },
+      }}
+    >
+      {({ context, actions }) => (
+        <AgenticResourcesPanel
+          context={context}
+          actions={actions}
+          events={{
+            emit: () => {},
+            on: () => () => {},
+          }}
+        />
+      )}
+    </MockPanelProvider>
+  ),
+};

@@ -342,7 +342,7 @@ export const AgenticResourcesPanel: React.FC<PanelComponentProps> = ({
         </div>
 
         {/* Search and Refresh */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: '1 1 200px', maxWidth: '400px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: '1 1 200px', maxWidth: '400px', flexWrap: 'nowrap' }}>
           {/* Search input - only show if there are >= 5 items */}
           {((mode === 'agents' && allItems.length >= 5) || (mode === 'skills' && skills.length >= 5)) && (
             <div
@@ -421,6 +421,7 @@ export const AgenticResourcesPanel: React.FC<PanelComponentProps> = ({
               justifyContent: 'center',
               transition: 'all 0.2s ease',
               marginLeft: 'auto',
+              flexShrink: 0,
               opacity: isRefreshing ? 0.7 : 1,
             }}
             title={mode === 'agents' ? 'Refresh agents' : 'Refresh skills'}

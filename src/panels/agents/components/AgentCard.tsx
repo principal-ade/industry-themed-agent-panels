@@ -43,9 +43,21 @@ const getSourceBadge = (
 export const AgentCard: React.FC<AgentCardProps> = ({ agent, onClick, isSelected }) => {
   const { theme } = useTheme();
   const sourceBadge = getSourceBadge(agent.source);
+  const [pathCopied, setPathCopied] = React.useState(false);
 
   // Extract a preview from content (first paragraph or section)
   const preview = agent.content.split('\n').find(line => line.trim() && !line.startsWith('#'))?.substring(0, 150) || 'No description available';
+
+  const handleCopyPath = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent triggering card onClick
+    try {
+      await navigator.clipboard.writeText(agent.path);
+      setPathCopied(true);
+      setTimeout(() => setPathCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy path:', err);
+    }
+  };
 
   return (
     <div
@@ -66,13 +78,11 @@ export const AgentCard: React.FC<AgentCardProps> = ({ agent, onClick, isSelected
       onMouseEnter={(e) => {
         if (!isSelected) {
           e.currentTarget.style.borderColor = theme.colors.textSecondary;
-          e.currentTarget.style.transform = 'translateY(-2px)';
         }
       }}
       onMouseLeave={(e) => {
         if (!isSelected) {
           e.currentTarget.style.borderColor = theme.colors.border;
-          e.currentTarget.style.transform = 'translateY(0)';
         }
       }}
     >
@@ -117,16 +127,36 @@ export const AgentCard: React.FC<AgentCardProps> = ({ agent, onClick, isSelected
         </div>
       </div>
 
-      {/* Path */}
+      {/* Path - clickable to copy */}
       <div
+        onClick={handleCopyPath}
         style={{
           fontSize: theme.fontSizes[0],
-          color: theme.colors.textSecondary,
+          color: pathCopied ? theme.colors.success : theme.colors.textMuted,
           fontFamily: theme.fonts.monospace,
-          wordBreak: 'break-all',
+          background: pathCopied ? `${theme.colors.success}15` : theme.colors.background,
+          padding: '4px 8px',
+          borderRadius: theme.radii[1],
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          cursor: 'pointer',
+          transition: 'all 0.2s ease',
+          border: `1px solid ${pathCopied ? theme.colors.success : 'transparent'}`,
+        }}
+        title={pathCopied ? 'Copied!' : `Click to copy: ${agent.path}`}
+        onMouseEnter={(e) => {
+          if (!pathCopied) {
+            e.currentTarget.style.background = theme.colors.backgroundTertiary || theme.colors.border;
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!pathCopied) {
+            e.currentTarget.style.background = theme.colors.background;
+          }
         }}
       >
-        {agent.path}
+        {pathCopied ? 'Copied!' : agent.path}
       </div>
 
       {/* Preview */}

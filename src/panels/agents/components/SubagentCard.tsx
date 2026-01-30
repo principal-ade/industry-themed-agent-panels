@@ -79,13 +79,11 @@ export const SubagentCard: React.FC<SubagentCardProps> = ({ subagent, onClick, i
       onMouseEnter={(e) => {
         if (!isSelected) {
           e.currentTarget.style.borderColor = theme.colors.textSecondary;
-          e.currentTarget.style.transform = 'translateY(-2px)';
         }
       }}
       onMouseLeave={(e) => {
         if (!isSelected) {
           e.currentTarget.style.borderColor = theme.colors.border;
-          e.currentTarget.style.transform = 'translateY(0)';
         }
       }}
     >

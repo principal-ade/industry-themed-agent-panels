@@ -282,7 +282,7 @@ export const AgenticResourcesPanel: React.FC<PanelComponentProps> = ({
         outline: 'none',
       }}
     >
-      {/* Header */}
+      {/* Header - Mode Toggle and Refresh */}
       <div
         style={{
           flexShrink: 0,
@@ -290,7 +290,6 @@ export const AgenticResourcesPanel: React.FC<PanelComponentProps> = ({
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: '12px',
-          flexWrap: 'wrap',
         }}
       >
         {/* Mode Toggle */}
@@ -341,101 +340,95 @@ export const AgenticResourcesPanel: React.FC<PanelComponentProps> = ({
           </button>
         </div>
 
-        {/* Search and Refresh */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: '1 1 200px', maxWidth: '400px', flexWrap: 'nowrap' }}>
-          {/* Search input - only show if there are >= 5 items */}
-          {((mode === 'agents' && allItems.length >= 5) || (mode === 'skills' && skills.length >= 5)) && (
-            <div
-              style={{
-                position: 'relative',
-                flex: 1,
-                minWidth: '150px',
-              }}
-            >
-              <Search
-                size={16}
-                color={theme.colors.textSecondary}
-                style={{
-                  position: 'absolute',
-                  left: '10px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  pointerEvents: 'none',
-                }}
-              />
-              <input
-                type="text"
-                placeholder={mode === 'agents' ? 'Search agents...' : 'Search skills...'}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '8px 32px 8px 32px',
-                  fontSize: theme.fontSizes[1],
-                  fontFamily: theme.fonts.body,
-                  border: `1px solid ${theme.colors.border}`,
-                  borderRadius: theme.radii[2],
-                  background: theme.colors.backgroundSecondary,
-                  color: theme.colors.text,
-                  outline: 'none',
-                  boxSizing: 'border-box',
-                }}
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  style={{
-                    position: 'absolute',
-                    right: '6px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'transparent',
-                    border: 'none',
-                    padding: '4px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: theme.colors.textSecondary,
-                  }}
-                  aria-label="Clear search"
-                >
-                  <X size={14} />
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* Refresh button - always visible */}
-          <button
-            onClick={handleRefresh}
-            disabled={isRefreshing || isLoading}
+        {/* Refresh button */}
+        <button
+          onClick={handleRefresh}
+          disabled={isRefreshing || isLoading}
+          style={{
+            background: theme.colors.backgroundSecondary,
+            border: `1px solid ${theme.colors.border}`,
+            borderRadius: theme.radii[1],
+            padding: '8px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'all 0.2s ease',
+            opacity: isRefreshing ? 0.7 : 1,
+          }}
+          title={mode === 'agents' ? 'Refresh agents' : 'Refresh skills'}
+        >
+          <RefreshCw
+            size={16}
+            color={theme.colors.textSecondary}
             style={{
-              background: theme.colors.backgroundSecondary,
-              border: `1px solid ${theme.colors.border}`,
-              borderRadius: theme.radii[1],
-              padding: '8px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'all 0.2s ease',
-              marginLeft: 'auto',
-              flexShrink: 0,
-              opacity: isRefreshing ? 0.7 : 1,
+              animation: isRefreshing ? 'spin 1s linear infinite' : 'none',
             }}
-            title={mode === 'agents' ? 'Refresh agents' : 'Refresh skills'}
-          >
-            <RefreshCw
-              size={16}
-              color={theme.colors.textSecondary}
-              style={{
-                animation: isRefreshing ? 'spin 1s linear infinite' : 'none',
-              }}
-            />
-          </button>
-        </div>
+          />
+        </button>
       </div>
+
+      {/* Search bar - separate row, only show if there are >= 5 items */}
+      {((mode === 'agents' && allItems.length >= 5) || (mode === 'skills' && skills.length >= 5)) && (
+        <div
+          style={{
+            flexShrink: 0,
+            position: 'relative',
+          }}
+        >
+          <Search
+            size={16}
+            color={theme.colors.textSecondary}
+            style={{
+              position: 'absolute',
+              left: '10px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              pointerEvents: 'none',
+            }}
+          />
+          <input
+            type="text"
+            placeholder={mode === 'agents' ? 'Search agents...' : 'Search skills...'}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '8px 32px 8px 32px',
+              fontSize: theme.fontSizes[1],
+              fontFamily: theme.fonts.body,
+              border: `1px solid ${theme.colors.border}`,
+              borderRadius: theme.radii[2],
+              background: theme.colors.backgroundSecondary,
+              color: theme.colors.text,
+              outline: 'none',
+              boxSizing: 'border-box',
+            }}
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              style={{
+                position: 'absolute',
+                right: '6px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'transparent',
+                border: 'none',
+                padding: '4px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: theme.colors.textSecondary,
+              }}
+              aria-label="Clear search"
+            >
+              <X size={14} />
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Filter Toggle */}
       {mode === 'agents' ? (

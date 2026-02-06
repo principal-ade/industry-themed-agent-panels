@@ -39,14 +39,12 @@ export const AgentsListPanel: React.FC<PanelComponentProps> = ({
     agents,
     isLoading: agentsLoading,
     error: agentsError,
-    refreshAgents,
   } = useAgentsData({ context });
 
   const {
     subagents,
     isLoading: subagentsLoading,
     error: subagentsError,
-    refreshSubagents,
   } = useSubagentsData({ context });
 
   const isLoading = agentsLoading || subagentsLoading;
@@ -131,7 +129,18 @@ export const AgentsListPanel: React.FC<PanelComponentProps> = ({
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
-      await Promise.all([refreshAgents(), refreshSubagents()]);
+      // Emit refresh event so host refreshes the fileTree from disk
+      if (events) {
+        events.emit({
+          type: 'agents:refresh' as any,
+          source: 'agents-list-panel',
+          timestamp: Date.now(),
+          payload: {},
+        });
+      }
+
+      // Show refresh animation for visual feedback
+      await new Promise(resolve => setTimeout(resolve, 600));
     } finally {
       setIsRefreshing(false);
     }

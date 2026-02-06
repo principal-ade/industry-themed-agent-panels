@@ -2,10 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import type { FileTree } from '@principal-ai/repository-abstraction';
 import type { PanelContextValue } from '../../../types';
 import {
-  determineSkillSource,
   findSkillFiles,
-  analyzeSkillStructure,
-  validateFrontmatter,
   parseSkillContent,
 } from '../utils/skillsUtils';
 
@@ -145,7 +142,6 @@ const skillToInstallation = (skill: Skill): SkillInstallation => ({
 const deduplicateSkills = (skills: Skill[], isBrowserMode: boolean = false): Skill[] => {
   // Skip deduplication in browser mode (no metadata available in remote repos)
   if (isBrowserMode) {
-    console.log('[useSkillsData] Browser mode detected, skipping deduplication');
     return skills;
   }
 
@@ -163,12 +159,10 @@ const deduplicateSkills = (skills: Skill[], isBrowserMode: boolean = false): Ski
     skillGroups.set(key, group);
   }
 
-  console.log('[useSkillsData] Deduplication found', skillGroups.size, 'unique skills from', skills.length, 'total');
-
   // For each group, select primary and track all installations
   const deduplicatedSkills: Skill[] = [];
 
-  for (const [key, group] of skillGroups.entries()) {
+  for (const group of skillGroups.values()) {
     if (group.length === 1) {
       // Only one installation, no deduplication needed
       // Still set installedLocations for consistency
@@ -191,9 +185,6 @@ const deduplicateSkills = (skills: Skill[], isBrowserMode: boolean = false): Ski
 
     // Sort installations by priority for consistent display
     installations.sort((a, b) => a.priority - b.priority);
-
-    console.log('[useSkillsData] Deduplicated skill:', primary.name,
-      'from', group.length, 'installations. Primary:', primary.source);
 
     // Create deduplicated skill with all installation info
     deduplicatedSkills.push({
@@ -233,11 +224,8 @@ export const useSkillsData = ({
   const loadSkills = useCallback(async () => {
     // Skip if we've already loaded this exact data
     if (fileTreeSha === lastLoadedSha.current && globalSkillsCount === lastGlobalSkillsCount.current) {
-      console.log('[useSkillsData] Skipping reload - data unchanged (SHA:', fileTreeSha, 'globalCount:', globalSkillsCount, ')');
       return;
     }
-
-    console.log('[useSkillsData] Loading skills - SHA changed:', fileTreeSha !== lastLoadedSha.current, 'globalCount changed:', globalSkillsCount !== lastGlobalSkillsCount.current);
 
     setIsLoading(true);
     setError(null);

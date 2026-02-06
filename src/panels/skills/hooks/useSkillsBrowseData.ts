@@ -46,11 +46,8 @@ export const useSkillsBrowseData = ({
   const loadSkills = useCallback(async () => {
     // Skip if we've already loaded this exact data
     if (fileTreeSha === lastLoadedSha.current) {
-      console.log('[useSkillsBrowseData] Skipping reload - data unchanged (SHA:', fileTreeSha, ')');
       return;
     }
-
-    console.log('[useSkillsBrowseData] Loading skills from GitHub repo - SHA:', fileTreeSha);
 
     setIsLoading(true);
     setError(null);
@@ -70,11 +67,8 @@ export const useSkillsBrowseData = ({
           return;
         }
 
-        console.log('[useSkillsBrowseData] GitHub repo detected:', repoPath);
-
         // Find all SKILL.md files in the repository (browser mode = true)
         const skillPaths = findSkillFiles(fileTree, true);
-        console.log('[useSkillsBrowseData] Found skill paths:', skillPaths);
 
         // Read content for each skill
         const skillPromises = skillPaths.map(async (skillPath) => {
@@ -93,7 +87,6 @@ export const useSkillsBrowseData = ({
         );
       }
 
-      console.log('[useSkillsBrowseData] Total skills loaded:', repoSkills.length);
       setSkills(repoSkills);
 
       // Update tracking ref

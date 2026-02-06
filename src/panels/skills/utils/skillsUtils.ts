@@ -235,10 +235,8 @@ export const parseSkillContent = async (
       const metadataPath = `${structure.skillFolderPath}/.metadata.json`;
       const metadataContent = await fileSystemAdapter.readFile(metadataPath);
       metadata = JSON.parse(metadataContent);
-      console.log('[skillsUtils] Loaded metadata for skill:', skillDirName, metadata);
-    } catch (error) {
+    } catch {
       // .metadata.json doesn't exist or couldn't be read - this is fine
-      console.debug('[skillsUtils] No metadata file for skill:', skillDirName);
     }
   }
 

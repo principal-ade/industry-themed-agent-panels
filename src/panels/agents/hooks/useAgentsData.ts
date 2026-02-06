@@ -184,11 +184,8 @@ export const useAgentsData = ({
   const loadAgents = useCallback(async () => {
     // Skip if we've already loaded this exact data
     if (fileTreeSha === lastLoadedSha.current && globalAgentsCount === lastGlobalAgentsCount.current) {
-      console.log('[useAgentsData] Skipping reload - data unchanged (SHA:', fileTreeSha, 'globalCount:', globalAgentsCount, ')');
       return;
     }
-
-    console.log('[useAgentsData] Loading agents - SHA changed:', fileTreeSha !== lastLoadedSha.current, 'globalCount changed:', globalAgentsCount !== lastGlobalAgentsCount.current);
 
     setIsLoading(true);
     setError(null);
@@ -197,12 +194,8 @@ export const useAgentsData = ({
       let localAgents: Agent[] = [];
 
       if (fileTree && fileSystem?.readFile && repoPath) {
-        console.log('[useAgentsData] Searching for AGENTS.md files in fileTree');
-
         // Find all AGENTS.md files in project
         const agentPaths = findAgentFiles(fileTree);
-
-        console.log('[useAgentsData] Found agent paths:', agentPaths);
 
         // Read content for each local agent
         const agentPromises = agentPaths.map(async (agentPath) => {
@@ -221,12 +214,8 @@ export const useAgentsData = ({
         );
       }
 
-      console.log('[useAgentsData] Global agents:', globalAgents);
-
       // Merge local and global agents
       const allAgents = [...localAgents, ...globalAgents];
-
-      console.log('[useAgentsData] Total agents:', allAgents.length);
 
       setAgents(allAgents);
 

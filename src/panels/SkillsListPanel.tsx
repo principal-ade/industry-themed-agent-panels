@@ -53,12 +53,10 @@ export const SkillsListPanel: React.FC<SkillsListPanelProps> = ({
   // Listen for skill installation/uninstallation events to refresh the list
   useEffect(() => {
     const unsubscribeInstalled = events.on('skill:installed', () => {
-      console.log('[SkillsListPanel] Skill installed, refreshing...');
       refreshSkills();
     });
 
     const unsubscribeUninstalled = events.on('skill:uninstalled', () => {
-      console.log('[SkillsListPanel] Skill uninstalled, refreshing...');
       refreshSkills();
     });
 

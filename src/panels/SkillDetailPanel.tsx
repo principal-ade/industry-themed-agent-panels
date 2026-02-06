@@ -166,7 +166,6 @@ export const SkillDetailPanel: React.FC<SkillDetailPanelProps> = ({
   }
 
   const handleParsed = (parsedSkill: PartialParsedSkill) => {
-    console.log('Skill parsed:', parsedSkill.metadata.name || '(unnamed)');
     if (parsedSkill.warnings.length > 0) {
       console.warn('Skill has warnings:', parsedSkill.warnings);
     }

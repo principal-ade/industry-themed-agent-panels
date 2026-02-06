@@ -49,12 +49,12 @@ export const SkillsBrowsePanel: React.FC<SkillsBrowsePanelProps> = ({
 
   // Get global skills to check if skills are already installed
   const globalSkillsSlice = context.getSlice<any>('globalSkills');
-  const globalSkills = globalSkillsSlice?.data?.skills || [];
 
   // Create a Set of installed skill names for fast lookup
   const installedSkillNames = useMemo(() => {
+    const globalSkills = globalSkillsSlice?.data?.skills || [];
     return new Set(globalSkills.map((skill: any) => skill.name));
-  }, [globalSkills]);
+  }, [globalSkillsSlice?.data?.skills]);
 
   // Listen for panel focus events
   usePanelFocusListener('skills-browse', events, () => panelRef.current?.focus());
@@ -62,12 +62,10 @@ export const SkillsBrowsePanel: React.FC<SkillsBrowsePanelProps> = ({
   // Listen for skill installation/uninstallation events to refresh the list
   useEffect(() => {
     const unsubscribeInstalled = events.on('skill:installed', () => {
-      console.log('[SkillsBrowsePanel] Skill installed, refreshing...');
       refreshSkills();
     });
 
     const unsubscribeUninstalled = events.on('skill:uninstalled', () => {
-      console.log('[SkillsBrowsePanel] Skill uninstalled, refreshing...');
       refreshSkills();
     });
 

@@ -47,14 +47,12 @@ export const AgenticResourcesPanel: React.FC<PanelComponentProps> = ({
     agents,
     isLoading: agentsLoading,
     error: agentsError,
-    refreshAgents,
   } = useAgentsData({ context });
 
   const {
     subagents,
     isLoading: subagentsLoading,
     error: subagentsError,
-    refreshSubagents,
   } = useSubagentsData({ context });
 
   // Load skills data
@@ -76,12 +74,10 @@ export const AgenticResourcesPanel: React.FC<PanelComponentProps> = ({
     if (mode !== 'skills') return;
 
     const unsubscribeInstalled = events.on('skill:installed', () => {
-      console.log('[AgenticResourcesPanel] Skill installed, refreshing...');
       refreshSkills();
     });
 
     const unsubscribeUninstalled = events.on('skill:uninstalled', () => {
-      console.log('[AgenticResourcesPanel] Skill uninstalled, refreshing...');
       refreshSkills();
     });
 
@@ -236,20 +232,16 @@ export const AgenticResourcesPanel: React.FC<PanelComponentProps> = ({
       // Minimum animation duration for visual feedback
       const minDelay = new Promise(resolve => setTimeout(resolve, 600));
 
-      if (mode === 'agents') {
-        await Promise.all([refreshAgents(), refreshSubagents(), minDelay]);
-      } else {
-        // For skills, emit refresh event and let the host handle it
-        if (events) {
-          events.emit({
-            type: 'skills:refresh' as any,
-            source: 'agentic-resources-panel',
-            timestamp: Date.now(),
-            payload: {},
-          });
-        }
-        await minDelay;
+      // Emit refresh event so host refreshes the fileTree/globalSkills from disk
+      if (events) {
+        events.emit({
+          type: mode === 'agents' ? ('agents:refresh' as any) : ('skills:refresh' as any),
+          source: 'agentic-resources-panel',
+          timestamp: Date.now(),
+          payload: {},
+        });
       }
+      await minDelay;
     } finally {
       setIsRefreshing(false);
     }

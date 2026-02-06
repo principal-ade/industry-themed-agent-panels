@@ -18,11 +18,10 @@ type SelectedItem =
 export const AgentDetailPanel: React.FC<AgentDetailPanelProps> = ({
   context,
   events,
-  actions,
 }) => {
   const { theme } = useTheme();
-  const { agents, isLoading: agentsLoading, error: agentsError } = useAgentsData({ context });
-  const { subagents, isLoading: subagentsLoading, error: subagentsError } = useSubagentsData({ context });
+  const { isLoading: agentsLoading, error: agentsError } = useAgentsData({ context });
+  const { isLoading: subagentsLoading, error: subagentsError } = useSubagentsData({ context });
   const [selectedItem, setSelectedItem] = useState<SelectedItem>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 

@@ -197,11 +197,8 @@ export const useSubagentsData = ({
   const loadSubagents = useCallback(async () => {
     // Skip if we've already loaded this exact data
     if (fileTreeSha === lastLoadedSha.current && globalSubagentsCount === lastGlobalSubagentsCount.current) {
-      console.log('[useSubagentsData] Skipping reload - data unchanged (SHA:', fileTreeSha, 'globalCount:', globalSubagentsCount, ')');
       return;
     }
-
-    console.log('[useSubagentsData] Loading subagents - SHA changed:', fileTreeSha !== lastLoadedSha.current, 'globalCount changed:', globalSubagentsCount !== lastGlobalSubagentsCount.current);
 
     setIsLoading(true);
     setError(null);
@@ -210,12 +207,8 @@ export const useSubagentsData = ({
       let localSubagents: Subagent[] = [];
 
       if (fileTree && fileSystem?.readFile && repoPath) {
-        console.log('[useSubagentsData] Searching for subagent files in .claude/agents/');
-
         // Find all subagent files in project
         const subagentPaths = findSubagentFiles(fileTree);
-
-        console.log('[useSubagentsData] Found subagent paths:', subagentPaths);
 
         // Read content for each local subagent
         const subagentPromises = subagentPaths.map(async (subagentPath) => {
@@ -234,12 +227,8 @@ export const useSubagentsData = ({
         );
       }
 
-      console.log('[useSubagentsData] Global subagents:', globalSubagents);
-
       // Merge local and global subagents
       const allSubagents = [...localSubagents, ...globalSubagents];
-
-      console.log('[useSubagentsData] Total subagents:', allSubagents.length);
 
       setSubagents(allSubagents);
 

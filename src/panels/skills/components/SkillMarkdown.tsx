@@ -10,12 +10,12 @@ import {
   type PartialSkillMetadata,
   type ValidationWarning,
 } from '@principal-ade/markdown-utils';
-import { Code, BookOpen, Package, Globe, Folder, AlertTriangle, Search, X, ChevronUp, ChevronDown, ExternalLink, FileEdit, Download, Check } from 'lucide-react';
+import { Code, BookOpen, Package, Globe, Search, X, ChevronUp, ChevronDown, ExternalLink, FileEdit, Download, Check } from 'lucide-react';
 import React from 'react';
 
 import { IndustryMarkdownSlide } from 'themed-markdown';
 
-import type { Skill, SkillSource } from '../hooks/useSkillsData';
+import type { Skill } from '../hooks/useSkillsData';
 import { extractHeaders, type MarkdownHeader } from '../utils/extractHeaders';
 import { SkillSidebar } from './SkillSidebar';
 import type { PanelActions, PanelEventEmitter } from '../../../types';
@@ -102,54 +102,6 @@ const formatRelativeTime = (dateString: string): string => {
     return `${years} ${years === 1 ? 'year' : 'years'} ago`;
   } catch {
     return dateString; // Return original string if parsing fails
-  }
-};
-
-/**
- * Helper to get source badge configuration
- */
-const getSourceConfig = (source: SkillSource) => {
-  switch (source) {
-    case 'global-universal':
-      return {
-        label: 'Global',
-        icon: Globe,
-        color: '#7c3aed', // purple
-        bgColor: '#7c3aed15',
-        borderColor: '#7c3aed30',
-      };
-    case 'global-claude':
-      return {
-        label: 'Global Claude',
-        icon: Globe,
-        color: '#0891b2', // cyan
-        bgColor: '#0891b215',
-        borderColor: '#0891b230',
-      };
-    case 'project-universal':
-      return {
-        label: 'Project',
-        icon: Folder,
-        color: '#16a34a', // green
-        bgColor: '#16a34a15',
-        borderColor: '#16a34a30',
-      };
-    case 'project-claude':
-      return {
-        label: 'Project Claude',
-        icon: Folder,
-        color: '#0284c7', // blue
-        bgColor: '#0284c715',
-        borderColor: '#0284c730',
-      };
-    case 'project-other':
-      return {
-        label: 'Project',
-        icon: Folder,
-        color: '#64748b', // slate
-        bgColor: '#64748b15',
-        borderColor: '#64748b30',
-      };
   }
 };
 
@@ -703,7 +655,6 @@ export const SkillMarkdown: React.FC<SkillMarkdownProps> = ({
   className = '',
   onParsed,
   onWarnings,
-  showRawOnError = false,
   containerWidth,
   structure,
   skill,

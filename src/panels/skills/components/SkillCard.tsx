@@ -1,6 +1,11 @@
 import React from 'react';
 import { useTheme } from '@principal-ade/industry-theme';
 import { Code, BookOpen, Package, Globe, Folder, Github, AlertTriangle } from 'lucide-react';
+import {
+  useDraggable,
+  DATA_TYPES,
+  DRAG_ACTIONS,
+} from '@principal-ade/panel-framework-core';
 import type { Skill, SkillSource } from '../hooks/useSkillsData';
 
 interface SkillCardProps {
@@ -99,6 +104,20 @@ export const SkillCard: React.FC<SkillCardProps> = ({
   const sourceConfig = getSourceConfig(skill.source);
   const [pathCopied, setPathCopied] = React.useState(false);
 
+  // Draggable hook for drag-and-drop support
+  const { isDragging, ...dragProps } = useDraggable({
+    dataType: DATA_TYPES.FILE_PATH,
+    primaryData: skill.path,  // Use skill path
+    metadata: {
+      name: skill.name,
+      description: skill.description,
+      source: skill.source,
+    },
+    suggestedActions: [DRAG_ACTIONS.INSERT_PATH, DRAG_ACTIONS.OPEN],
+    sourcePanel: 'skills-panel',
+    dragPreview: skill.name,
+  });
+
   // Determine which path to copy based on filter context and installed locations
   const getPathToCopy = (): string => {
     // If no filter context or no multiple installations, use default path
@@ -140,12 +159,13 @@ export const SkillCard: React.FC<SkillCardProps> = ({
   return (
     <div
       onClick={() => onClick?.(skill)}
+      {...dragProps}
       style={{
         padding: '16px',
         background: isSelected ? `${theme.colors.primary}10` : theme.colors.surface,
         border: `1px solid ${isSelected ? theme.colors.primary : theme.colors.border}`,
         borderRadius: theme.radii[2],
-        cursor: onClick ? 'pointer' : 'default',
+        cursor: isDragging ? 'grabbing' : (onClick ? 'pointer' : 'default'),
         transition: 'all 0.2s ease',
         display: 'flex',
         flexDirection: 'column',

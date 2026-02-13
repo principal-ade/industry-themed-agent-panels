@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { PathsFileTreeBuilder } from '@principal-ai/repository-abstraction';
 import { SkillsListPanel } from './SkillsListPanel';
@@ -1200,5 +1201,145 @@ export const FilterBasedPathCopy: Story = {
         {(props) => <SkillsListPanel {...props} />}
       </MockPanelProvider>
     );
+  },
+};
+
+/**
+ * Draggable Skills - Demonstrates drag-and-drop functionality
+ *
+ * Skills can be dragged to terminal panels to insert their file paths.
+ * Try dragging skills from the panel to the drop zone on the right.
+ */
+export const DraggableSkills: Story = {
+  render: () => {
+    const [droppedSkill, setDroppedSkill] = useState<string | null>(null);
+    const [isDragOver, setIsDragOver] = useState(false);
+
+    const mockSlices = new Map<string, DataSlice>();
+    mockSlices.set('fileTree', {
+      scope: 'repository',
+      name: 'fileTree',
+      data: mockFileTreeWithSkills,
+      loading: false,
+      error: null,
+      refresh: async () => {},
+    });
+
+    return (
+      <div style={{ display: 'flex', gap: '20px', height: '100vh' }}>
+        {/* Source: Skills panel with draggable cards */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <MockPanelProvider
+            contextOverrides={{
+              slices: mockSlices,
+              adapters: {
+                fileSystem: createMockFileSystemWithSkills(),
+              },
+            } as any}
+          >
+            {(props) => <SkillsListPanel {...props} />}
+          </MockPanelProvider>
+        </div>
+
+        {/* Target: Drop zone to test drag data */}
+        <div
+          style={{
+            width: '400px',
+            border: isDragOver ? '2px dashed #3b82f6' : '2px dashed #444',
+            borderRadius: '8px',
+            padding: '20px',
+            backgroundColor: isDragOver ? 'rgba(59, 130, 246, 0.1)' : '#1a1a1a',
+            transition: 'all 0.2s ease',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setIsDragOver(true);
+          }}
+          onDragLeave={() => {
+            setIsDragOver(false);
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            setIsDragOver(false);
+            const data = e.dataTransfer.getData('application/x-panel-data');
+            if (data) {
+              try {
+                const panelData = JSON.parse(data);
+                setDroppedSkill(panelData.primaryData);
+              } catch (err) {
+                console.error('Failed to parse panel data:', err);
+              }
+            }
+          }}
+        >
+          <h3 style={{ margin: '0 0 16px 0', fontSize: '14px', color: '#ccc' }}>
+            Drop Zone (Terminal Simulation)
+          </h3>
+          {droppedSkill ? (
+            <div style={{
+              padding: '12px',
+              background: '#2a2a2a',
+              borderRadius: '4px',
+              border: '1px solid #3b82f6',
+              flex: 1,
+            }}>
+              <div style={{ fontSize: '12px', color: '#3b82f6', marginBottom: '8px', fontWeight: 'bold' }}>
+                ✓ Skill path dropped successfully!
+              </div>
+              <div style={{ fontSize: '11px', color: '#888', marginBottom: '4px' }}>
+                <strong>Path inserted:</strong>
+              </div>
+              <pre style={{
+                margin: 0,
+                padding: '8px',
+                background: '#1a1a1a',
+                borderRadius: '2px',
+                fontSize: '11px',
+                color: '#ccc',
+                fontFamily: 'monospace',
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-all',
+              }}>
+                {droppedSkill}
+              </pre>
+              <button
+                onClick={() => setDroppedSkill(null)}
+                style={{
+                  marginTop: '12px',
+                  padding: '6px 12px',
+                  background: '#3b82f6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  fontSize: '11px',
+                  cursor: 'pointer',
+                }}
+              >
+                Clear
+              </button>
+            </div>
+          ) : (
+            <div style={{
+              color: '#666',
+              fontSize: '13px',
+              textAlign: 'center',
+              marginTop: '80px',
+              flex: 1,
+            }}>
+              <div style={{ fontSize: '32px', marginBottom: '12px' }}>↓</div>
+              <p>Drag a skill from the left panel here to test</p>
+              <p style={{ fontSize: '11px', color: '#555', marginTop: '8px' }}>
+                The skill's file path will be displayed when dropped
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  },
+  parameters: {
+    layout: 'fullscreen',
   },
 };

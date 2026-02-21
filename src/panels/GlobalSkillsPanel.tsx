@@ -2,11 +2,15 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useTheme } from '@principal-ade/industry-theme';
 import { usePanelFocusListener } from '@principal-ade/panel-layouts';
 import { AlertCircle, Search, X, RefreshCw, FileCode } from 'lucide-react';
-import type { PanelComponentProps } from '../types';
+import type {
+  PanelComponentProps,
+  AgentPanelActions,
+  SkillsPanelContext,
+} from '../types';
 import { useSkillsData, type Skill } from './skills/hooks/useSkillsData';
 import { SkillCard } from './skills/components/SkillCard';
 
-export interface GlobalSkillsPanelProps extends PanelComponentProps {
+export interface GlobalSkillsPanelProps extends PanelComponentProps<AgentPanelActions, SkillsPanelContext> {
   /**
    * When true, shows the refresh button and enables refresh functionality.
    * The host must support handling 'skills:refresh' events.

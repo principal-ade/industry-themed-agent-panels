@@ -2,14 +2,18 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useTheme } from '@principal-ade/industry-theme';
 import { usePanelFocusListener } from '@principal-ade/panel-layouts';
 import { AlertCircle, Search, X, RefreshCw, FileCode } from 'lucide-react';
-import type { PanelComponentProps } from '../types';
+import type {
+  PanelComponentProps,
+  AgentPanelActions,
+  SkillsPanelContext,
+} from '../types';
 import { useSkillsData, type Skill } from './skills/hooks/useSkillsData';
 import { SkillCard } from './skills/components/SkillCard';
 
 // Testing FileTree timestamp detection
 type SkillFilter = 'project' | 'global';
 
-export interface SkillsListPanelProps extends PanelComponentProps {
+export interface SkillsListPanelProps extends PanelComponentProps<AgentPanelActions, SkillsPanelContext> {
   /**
    * When true, the panel operates in browse mode (e.g., browsing GitHub repos):
    * - Changes "Project" filter label to "Git Repo"
@@ -68,9 +72,8 @@ export const SkillsListPanel: React.FC<SkillsListPanelProps> = ({
 
   // Check if there's a repository loaded (to determine if filters should be shown)
   const hasRepository = useMemo(() => {
-    const fileTreeSlice = context.getSlice<any>('fileTree');
-    return !!fileTreeSlice?.data;
-  }, [context]);
+    return !!context.fileTree?.data;
+  }, [context.fileTree?.data]);
 
   // Filter skills by search query and source type
   const filteredSkills = useMemo(() => {

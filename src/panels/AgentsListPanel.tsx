@@ -2,7 +2,11 @@ import React, { useState, useMemo, useRef } from 'react';
 import { useTheme } from '@principal-ade/industry-theme';
 import { usePanelFocusListener } from '@principal-ade/panel-layouts';
 import { AlertCircle, Search, X, RefreshCw, FileCode, BookOpen, Bot } from 'lucide-react';
-import type { PanelComponentProps } from '../types';
+import type {
+  PanelComponentProps,
+  AgentPanelActions,
+  AgentsPanelContext,
+} from '../types';
 import { useAgentsData, type Agent } from './agents/hooks/useAgentsData';
 import { useSubagentsData, type Subagent } from './agents/hooks/useSubagentsData';
 import { AgentCard } from './agents/components/AgentCard';
@@ -23,7 +27,7 @@ type AgentItem =
  * - Search and filter functionality
  * - Click to select and emit events for detail views
  */
-export const AgentsListPanel: React.FC<PanelComponentProps> = ({
+export const AgentsListPanel: React.FC<PanelComponentProps<AgentPanelActions, AgentsPanelContext>> = ({
   context,
   events,
 }) => {

@@ -1,5 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import type { PanelComponentProps } from '../types';
+import type {
+  PanelComponentProps,
+  AgentPanelActions,
+  AgentsPanelContext,
+} from '../types';
 import { useAgentsData, type Agent } from './agents/hooks/useAgentsData';
 import { useSubagentsData, type Subagent } from './agents/hooks/useSubagentsData';
 import { DocumentView } from 'themed-markdown';
@@ -8,7 +12,7 @@ import { usePanelFocusListener } from '@principal-ade/panel-layouts';
 import { BookOpen, Bot, FileText, Wrench, Zap, Code2 } from 'lucide-react';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface AgentDetailPanelProps extends PanelComponentProps {}
+export interface AgentDetailPanelProps extends PanelComponentProps<AgentPanelActions, AgentsPanelContext> {}
 
 type SelectedItem =
   | { type: 'agent'; data: Agent }

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import type { FileTree } from '@principal-ai/repository-abstraction';
-import type { PanelContextValue } from '../../../types';
+import type { PanelContextValue } from '@principal-ade/panel-framework-core';
+import type { AgentsPanelContext } from '../../../types';
 
 export type AgentSource =
   | 'project-root'      // ./AGENTS.md at repository root
@@ -34,7 +35,7 @@ export interface GlobalAgentsSlice {
 }
 
 interface UseAgentsDataParams {
-  context: PanelContextValue;
+  context: PanelContextValue<AgentsPanelContext>;
 }
 
 interface UseAgentsDataReturn {
@@ -161,10 +162,10 @@ export const useAgentsData = ({
   const [error, setError] = useState<string | null>(null);
 
   // Extract stable references from context
-  const fileTreeSlice = context.getSlice<FileTree>('fileTree');
+  const fileTreeSlice = context.fileTree;
   const fileTree = fileTreeSlice?.data;
   const fileTreeSha = fileTree?.sha;
-  const globalAgentsSlice = context.getSlice<GlobalAgentsSlice>('globalAgents');
+  const globalAgentsSlice = context.globalAgents;
 
   // Memoize globalAgents to prevent infinite re-renders
   const globalAgents = useMemo(

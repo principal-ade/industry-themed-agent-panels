@@ -1,5 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import type { PanelComponentProps } from '../types';
+import type {
+  PanelComponentProps,
+  AgentPanelActions,
+  SkillsPanelContext,
+} from '../types';
 import { useSkillsData } from './skills/hooks/useSkillsData';
 import type { Skill } from './skills/hooks/useSkillsData';
 import { SkillMarkdown, type SkillMarkdownProps } from './skills/components/SkillMarkdown';
@@ -8,7 +12,7 @@ import { useTheme } from '@principal-ade/industry-theme';
 import { usePanelFocusListener } from '@principal-ade/panel-layouts';
 import './SkillDetailPanel.css';
 
-export interface SkillDetailPanelProps extends PanelComponentProps {
+export interface SkillDetailPanelProps extends PanelComponentProps<AgentPanelActions, SkillsPanelContext> {
   /**
    * Optional skill ID to display.
    * If provided, this takes precedence over event-based selection.

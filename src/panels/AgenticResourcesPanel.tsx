@@ -2,7 +2,11 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useTheme } from '@principal-ade/industry-theme';
 import { usePanelFocusListener } from '@principal-ade/panel-layouts';
 import { AlertCircle, Search, X, RefreshCw, FileCode, BookOpen, Bot, Wrench } from 'lucide-react';
-import type { PanelComponentProps } from '../types';
+import type {
+  PanelComponentProps,
+  AgentPanelActions,
+  AgenticResourcesPanelContext,
+} from '../types';
 import { useAgentsData, type Agent } from './agents/hooks/useAgentsData';
 import { useSubagentsData, type Subagent } from './agents/hooks/useSubagentsData';
 import { AgentCard } from './agents/components/AgentCard';
@@ -29,7 +33,7 @@ type AgentItem =
  * - Mode toggle to switch between Agents and Skills views
  * - Click to select and emit events for detail views
  */
-export const AgenticResourcesPanel: React.FC<PanelComponentProps> = ({
+export const AgenticResourcesPanel: React.FC<PanelComponentProps<AgentPanelActions, AgenticResourcesPanelContext>> = ({
   context,
   events,
 }) => {
@@ -144,9 +148,8 @@ export const AgenticResourcesPanel: React.FC<PanelComponentProps> = ({
 
   // Check if there's a repository loaded (for skills filter)
   const hasRepository = useMemo(() => {
-    const fileTreeSlice = context.getSlice<any>('fileTree');
-    return !!fileTreeSlice?.data;
-  }, [context]);
+    return !!context.fileTree?.data;
+  }, [context.fileTree?.data]);
 
   // Filter skills by search query and source type
   const filteredSkills = useMemo(() => {

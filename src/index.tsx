@@ -5,7 +5,13 @@ import { SkillDetailPanel, type SkillDetailPanelProps } from './panels/SkillDeta
 import { AgentsListPanel } from './panels/AgentsListPanel';
 import { AgentDetailPanel } from './panels/AgentDetailPanel';
 import { AgenticResourcesPanel } from './panels/AgenticResourcesPanel';
-import type { PanelDefinition, PanelContextValue } from './types';
+import type { PanelDefinition, PanelContextValue } from '@principal-ade/panel-framework-core';
+import type {
+  AgentPanelActions,
+  SkillsPanelContext,
+  AgentsPanelContext,
+  AgenticResourcesPanelContext,
+} from './types';
 import type { Skill } from './panels/skills/hooks/useSkillsData';
 
 // Export component props types for external use
@@ -18,7 +24,7 @@ export { SkillsBrowsePanel, GlobalSkillsPanel, AgenticResourcesPanel };
  * Export array of panel definitions.
  * This is the required export for panel extensions.
  */
-export const panels: PanelDefinition[] = [
+export const panels: Array<PanelDefinition> = [
   {
     metadata: {
       id: 'industry-theme.skills-list',
@@ -29,7 +35,7 @@ export const panels: PanelDefinition[] = [
       description: 'Display and manage Agent Skills from SKILL.md files',
       slices: ['fileTree', 'globalSkills'], // Data slices this panel depends on
     },
-    component: SkillsListPanel,
+    component: SkillsListPanel as any,
 
     // Optional: Called when this specific panel is mounted
     onMount: async (context: PanelContextValue) => {
@@ -56,7 +62,7 @@ export const panels: PanelDefinition[] = [
       description: 'Browse Agent Skills from GitHub repositories',
       slices: ['fileTree'], // Only needs fileTree, not globalSkills
     },
-    component: SkillsBrowsePanel,
+    component: SkillsBrowsePanel as any,
 
     // Optional: Called when this specific panel is mounted
     onMount: async (context: PanelContextValue) => {
@@ -83,7 +89,7 @@ export const panels: PanelDefinition[] = [
       description: 'Display only global Agent Skills (no project skills)',
       slices: ['fileTree', 'globalSkills'], // Depends on fileTree and globalSkills
     },
-    component: GlobalSkillsPanel,
+    component: GlobalSkillsPanel as any,
 
     // Optional: Called when this specific panel is mounted
     onMount: async (context: PanelContextValue) => {
@@ -110,7 +116,7 @@ export const panels: PanelDefinition[] = [
       description: 'Display detailed information about a selected Agent Skill',
       slices: ['fileTree', 'globalSkills'], // Data slices this panel depends on
     },
-    component: SkillDetailPanel,
+    component: SkillDetailPanel as any,
 
     // Optional: Called when this specific panel is mounted
     onMount: async (context: PanelContextValue) => {
@@ -137,7 +143,7 @@ export const panels: PanelDefinition[] = [
       description: 'Display AGENTS.md documentation and Claude Code subagents',
       slices: ['fileTree', 'globalAgents', 'globalSubagents'], // Data slices this panel depends on
     },
-    component: AgentsListPanel,
+    component: AgentsListPanel as any,
 
     // Optional: Called when this specific panel is mounted
     onMount: async (context: PanelContextValue) => {
@@ -164,7 +170,7 @@ export const panels: PanelDefinition[] = [
       description: 'Display detailed information about a selected agent or subagent',
       slices: ['fileTree', 'globalAgents', 'globalSubagents'], // Data slices this panel depends on
     },
-    component: AgentDetailPanel,
+    component: AgentDetailPanel as any,
 
     // Optional: Called when this specific panel is mounted
     onMount: async (context: PanelContextValue) => {
@@ -191,7 +197,7 @@ export const panels: PanelDefinition[] = [
       description: 'Unified panel for both Agents and Skills with mode toggle',
       slices: ['fileTree', 'globalAgents', 'globalSubagents', 'globalSkills'], // Data slices this panel depends on
     },
-    component: AgenticResourcesPanel,
+    component: AgenticResourcesPanel as any,
 
     // Optional: Called when this specific panel is mounted
     onMount: async (context: PanelContextValue) => {

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { FileTree } from '@principal-ai/repository-abstraction';
-import type { PanelContextValue } from '../../../types';
+import type { PanelContextValue } from '@principal-ade/panel-framework-core';
+import type { SkillsPanelContext } from '../../../types';
 import type { Skill } from './useSkillsData';
 import {
   findSkillFiles,
@@ -11,7 +12,7 @@ import {
 const EMPTY_SKILLS_ARRAY: Skill[] = [];
 
 interface UseSkillsBrowseDataParams {
-  context: PanelContextValue;
+  context: PanelContextValue<SkillsPanelContext>;
 }
 
 interface UseSkillsBrowseDataReturn {
@@ -33,7 +34,7 @@ export const useSkillsBrowseData = ({
   const [error, setError] = useState<string | null>(null);
 
   // Extract stable references from context
-  const fileTreeSlice = context.getSlice<FileTree>('fileTree');
+  const fileTreeSlice = context.fileTree;
   const fileTree = fileTreeSlice?.data;
   const fileTreeSha = fileTree?.sha;
   const repoPath = context.currentScope.repository?.path;

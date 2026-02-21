@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { FileTree } from '@principal-ai/repository-abstraction';
-import type { PanelContextValue } from '../../../types';
+import type { PanelContextValue } from '@principal-ade/panel-framework-core';
+import type { SkillsPanelContext } from '../../../types';
 import {
   findSkillFiles,
   parseSkillContent,
@@ -77,7 +78,7 @@ export interface GlobalSkillsSlice {
 }
 
 interface UseSkillsDataParams {
-  context: PanelContextValue;
+  context: PanelContextValue<SkillsPanelContext>;
 }
 
 interface UseSkillsDataReturn {
@@ -207,10 +208,10 @@ export const useSkillsData = ({
   const [error, setError] = useState<string | null>(null);
 
   // Extract stable references from context to avoid unnecessary re-renders
-  const fileTreeSlice = context.getSlice<FileTree>('fileTree');
+  const fileTreeSlice = context.fileTree;
   const fileTree = fileTreeSlice?.data;
   const fileTreeSha = fileTree?.sha; // Use SHA as stable identity
-  const globalSkillsSlice = context.getSlice<GlobalSkillsSlice>('globalSkills');
+  const globalSkillsSlice = context.globalSkills;
   const globalSkills = globalSkillsSlice?.data?.skills ?? EMPTY_SKILLS_ARRAY;
   const globalSkillsCount = globalSkills.length; // Use count as stable primitive
   const repoPath = context.currentScope.repository?.path;

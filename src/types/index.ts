@@ -40,3 +40,14 @@ export type {
   JsonSchema,
   PanelEventCallTemplate,
 } from '@principal-ade/panel-framework-core';
+
+// Export agent panels typed interfaces
+export type {
+  GlobalSkillsSlice,
+  GlobalAgentsSlice,
+  GlobalSubagentsSlice,
+  AgentPanelActions,
+  SkillsPanelContext,
+  AgentsPanelContext,
+  AgenticResourcesPanelContext,
+} from './agent-panels.types';

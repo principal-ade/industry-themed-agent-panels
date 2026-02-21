@@ -2,12 +2,16 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useTheme } from '@principal-ade/industry-theme';
 import { usePanelFocusListener } from '@principal-ade/panel-layouts';
 import { AlertCircle, Search, X, RefreshCw, FileCode } from 'lucide-react';
-import type { PanelComponentProps } from '../types';
+import type {
+  PanelComponentProps,
+  AgentPanelActions,
+  SkillsPanelContext,
+} from '../types';
 import { useSkillsBrowseData } from './skills/hooks/useSkillsBrowseData';
 import type { Skill } from './skills/hooks/useSkillsData';
 import { SkillCard } from './skills/components/SkillCard';
 
-export interface SkillsBrowsePanelProps extends PanelComponentProps {
+export interface SkillsBrowsePanelProps extends PanelComponentProps<AgentPanelActions, SkillsPanelContext> {
   /**
    * When true, shows the refresh button and enables refresh functionality.
    * The host must support handling 'skills:refresh' events.
@@ -40,15 +44,15 @@ export const SkillsBrowsePanel: React.FC<SkillsBrowsePanelProps> = ({
   // Load skills data (GitHub repo only, no global skills)
   const { skills, isLoading, error, refreshSkills } = useSkillsBrowseData({ context });
 
-  // Get GitHub repository info from context
-  const fileTreeSlice = context.getSlice<any>('fileTree');
+  // Get GitHub repository info from context - use typed properties directly
+  const fileTreeSlice = context.fileTree;
   const fileTree = fileTreeSlice?.data;
   const sourceInfo = fileTree?.metadata?.sourceInfo;
   const owner = sourceInfo?.owner;
   const repo = sourceInfo?.repo;
 
   // Get global skills to check if skills are already installed
-  const globalSkillsSlice = context.getSlice<any>('globalSkills');
+  const globalSkillsSlice = context.globalSkills;
 
   // Create a Set of installed skill names for fast lookup
   const installedSkillNames = useMemo(() => {
@@ -187,7 +191,7 @@ export const SkillsBrowsePanel: React.FC<SkillsBrowsePanelProps> = ({
                 onMouseEnter={(e) => (e.currentTarget.style.textDecoration = 'underline')}
                 onMouseLeave={(e) => (e.currentTarget.style.textDecoration = 'none')}
               >
-                {repo}
+                {String(repo || '')}
               </h2>
               <div
                 style={{
@@ -198,7 +202,7 @@ export const SkillsBrowsePanel: React.FC<SkillsBrowsePanelProps> = ({
                 onMouseEnter={(e) => (e.currentTarget.style.textDecoration = 'underline')}
                 onMouseLeave={(e) => (e.currentTarget.style.textDecoration = 'none')}
               >
-                {owner}
+                {String(owner || '')}
               </div>
             </a>
           ) : (

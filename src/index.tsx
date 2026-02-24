@@ -1,21 +1,13 @@
-import { SkillsListPanel, type SkillsListPanelProps } from './panels/SkillsListPanel';
 import { SkillsBrowsePanel } from './panels/SkillsBrowsePanel';
 import { GlobalSkillsPanel, type GlobalSkillsPanelProps } from './panels/GlobalSkillsPanel';
 import { SkillDetailPanel, type SkillDetailPanelProps } from './panels/SkillDetailPanel';
-import { AgentsListPanel } from './panels/AgentsListPanel';
 import { AgentDetailPanel } from './panels/AgentDetailPanel';
 import { AgenticResourcesPanel } from './panels/AgenticResourcesPanel';
 import type { PanelDefinition, PanelContextValue } from '@principal-ade/panel-framework-core';
-import type {
-  AgentPanelActions,
-  SkillsPanelContext,
-  AgentsPanelContext,
-  AgenticResourcesPanelContext,
-} from './types';
 import type { Skill } from './panels/skills/hooks/useSkillsData';
 
 // Export component props types for external use
-export type { SkillsListPanelProps, SkillDetailPanelProps, GlobalSkillsPanelProps, Skill };
+export type { SkillDetailPanelProps, GlobalSkillsPanelProps, Skill };
 
 // Export standalone components for direct use
 export { SkillsBrowsePanel, GlobalSkillsPanel, AgenticResourcesPanel };
@@ -25,33 +17,6 @@ export { SkillsBrowsePanel, GlobalSkillsPanel, AgenticResourcesPanel };
  * This is the required export for panel extensions.
  */
 export const panels: Array<PanelDefinition> = [
-  {
-    metadata: {
-      id: 'industry-theme.skills-list',
-      name: 'Skills List',
-      icon: '⚡',
-      version: '0.1.0',
-      author: 'Principal ADE',
-      description: 'Display and manage Agent Skills from SKILL.md files',
-      slices: ['fileTree', 'globalSkills'], // Data slices this panel depends on
-    },
-    component: SkillsListPanel as any,
-
-    // Optional: Called when this specific panel is mounted
-    onMount: async (context: PanelContextValue) => {
-      // eslint-disable-next-line no-console
-      console.log(
-        'Skills List Panel mounted',
-        context.currentScope.repository?.path
-      );
-    },
-
-    // Optional: Called when this specific panel is unmounted
-    onUnmount: async (_context: PanelContextValue) => {
-      // eslint-disable-next-line no-console
-      console.log('Skills List Panel unmounting');
-    },
-  },
   {
     metadata: {
       id: 'industry-theme.skills-browse',
@@ -131,33 +96,6 @@ export const panels: Array<PanelDefinition> = [
     onUnmount: async (_context: PanelContextValue) => {
       // eslint-disable-next-line no-console
       console.log('Skill Detail Panel unmounting');
-    },
-  },
-  {
-    metadata: {
-      id: 'industry-theme.agents-list',
-      name: 'Agents List',
-      icon: '🤖',
-      version: '0.1.0',
-      author: 'Principal ADE',
-      description: 'Display AGENTS.md documentation and Claude Code subagents',
-      slices: ['fileTree', 'globalAgents', 'globalSubagents'], // Data slices this panel depends on
-    },
-    component: AgentsListPanel as any,
-
-    // Optional: Called when this specific panel is mounted
-    onMount: async (context: PanelContextValue) => {
-      // eslint-disable-next-line no-console
-      console.log(
-        'Agents List Panel mounted',
-        context.currentScope.repository?.path
-      );
-    },
-
-    // Optional: Called when this specific panel is unmounted
-    onUnmount: async (_context: PanelContextValue) => {
-      // eslint-disable-next-line no-console
-      console.log('Agents List Panel unmounting');
     },
   },
   {

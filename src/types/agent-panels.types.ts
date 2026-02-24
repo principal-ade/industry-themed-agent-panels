@@ -39,7 +39,7 @@ export interface AgentPanelActions extends PanelActions {}
 
 /**
  * Context for panels that need fileTree and globalSkills
- * Used by: SkillsListPanel, GlobalSkillsPanel, SkillsBrowsePanel, SkillDetailPanel
+ * Used by: GlobalSkillsPanel, SkillsBrowsePanel, SkillDetailPanel
  *
  * Note: Slices use `DataSlice<T | null>` to distinguish between:
  * - `null` = "not fetched yet" or "not available"
@@ -52,7 +52,7 @@ export interface SkillsPanelContext {
 
 /**
  * Context for panels that need fileTree, globalAgents, and globalSubagents
- * Used by: AgentsListPanel, AgentDetailPanel
+ * Used by: AgentDetailPanel
  */
 export interface AgentsPanelContext {
   fileTree: DataSlice<FileTree | null>;

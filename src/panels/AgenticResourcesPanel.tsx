@@ -39,6 +39,8 @@ export const AgenticResourcesPanel: React.FC<PanelComponentProps<AgentPanelActio
 }) => {
   const { theme } = useTheme();
   const panelRef = useRef<HTMLDivElement>(null);
+  const hasLoadedAgentsRef = useRef(false);
+  const hasLoadedSkillsRef = useRef(false);
   const [mode, setMode] = useState<PanelMode>('agents');
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -67,7 +69,18 @@ export const AgenticResourcesPanel: React.FC<PanelComponentProps<AgentPanelActio
     refreshSkills,
   } = useSkillsData({ context });
 
-  const isLoading = mode === 'agents' ? (agentsLoading || subagentsLoading) : skillsLoading;
+  // Track when initial load completes
+  if (!agentsLoading && !subagentsLoading && !hasLoadedAgentsRef.current) {
+    hasLoadedAgentsRef.current = true;
+  }
+  if (!skillsLoading && !hasLoadedSkillsRef.current) {
+    hasLoadedSkillsRef.current = true;
+  }
+
+  // Only show loading on initial load, not on refreshes
+  const showAgentsLoading = (agentsLoading || subagentsLoading) && !hasLoadedAgentsRef.current;
+  const showSkillsLoading = skillsLoading && !hasLoadedSkillsRef.current;
+  const isLoading = mode === 'agents' ? showAgentsLoading : showSkillsLoading;
   const error = mode === 'agents' ? (agentsError || subagentsError) : skillsError;
 
   // Listen for panel focus events

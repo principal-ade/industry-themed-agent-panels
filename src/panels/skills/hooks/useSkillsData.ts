@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { FileTree } from '@principal-ai/repository-abstraction';
 import type { PanelContextValue } from '@principal-ade/panel-framework-core';
 import type { SkillsPanelContext } from '../../../types';
 import {

@@ -221,6 +221,7 @@ export const Default: Story = {
           events={{
             emit: () => {},
             on: () => () => {},
+            off: () => {},
           }}
         />
       )}
@@ -258,6 +259,7 @@ export const AgentsOnly: Story = {
           events={{
             emit: () => {},
             on: () => () => {},
+            off: () => {},
           }}
         />
       )}
@@ -303,6 +305,7 @@ export const SkillsOnly: Story = {
           events={{
             emit: () => {},
             on: () => () => {},
+            off: () => {},
           }}
         />
       )}
@@ -327,6 +330,7 @@ export const Empty: Story = {
           events={{
             emit: () => {},
             on: () => () => {},
+            off: () => {},
           }}
         />
       )}
@@ -348,6 +352,7 @@ export const Loading: Story = {
           events={{
             emit: () => {},
             on: () => () => {},
+            off: () => {},
           }}
         />
       )}
@@ -555,6 +560,7 @@ export const MultipleSubagents: Story = {
           events={{
             emit: () => {},
             on: () => () => {},
+            off: () => {},
           }}
         />
       )}

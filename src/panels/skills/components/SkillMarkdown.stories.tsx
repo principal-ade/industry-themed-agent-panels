@@ -1,5 +1,5 @@
 import { ThemeProvider, theme as defaultTheme } from '@principal-ade/industry-theme';
-import type { ParsedSkill } from '@principal-ade/markdown-utils';
+import type { PartialParsedSkill } from '@principal-ade/markdown-utils';
 import type { Meta, StoryObj } from '@storybook/react';
 import React, { useEffect, useRef, useState } from 'react';
 import { fn } from 'storybook/test';
@@ -297,18 +297,20 @@ export const Basic: Story = {
     content: basicSkillContent,
     theme: defaultTheme,
     onParsed: fn(),
-    onError: fn(),
     actions: createMockActions(),
     events: createMockEvents(),
     skill: {
       id: 'legal-review',
       name: 'legal-review',
       path: '/Users/developer/.claude/skills/legal-review/SKILL.md',
+      skillFolderPath: '/Users/developer/.claude/skills/legal-review',
       source: 'global-universal' as const,
+      priority: 4 as const,
       content: basicSkillContent,
       hasScripts: false,
       hasReferences: false,
       hasAssets: false,
+      frontmatterValidation: { isValid: true, hasStructure: true, missingFields: [] },
     },
   },
 };
@@ -321,7 +323,6 @@ export const Minimal: Story = {
     content: minimalSkillContent,
     theme: defaultTheme,
     onParsed: fn(),
-    onError: fn(),
   },
 };
 
@@ -333,20 +334,22 @@ export const FullFeatured: Story = {
     content: fullFeaturedSkillContent,
     theme: defaultTheme,
     onParsed: fn(),
-    onError: fn(),
     actions: createMockActions(),
     events: createMockEvents(),
     skill: {
       id: 'sql-query-generator',
       name: 'sql-query-generator',
       path: '/Users/developer/.claude/skills/sql-query-generator/SKILL.md',
+      skillFolderPath: '/Users/developer/.claude/skills/sql-query-generator',
       source: 'global-universal' as const,
+      priority: 4 as const,
       content: fullFeaturedSkillContent,
       hasScripts: true,
       hasReferences: true,
       hasAssets: false,
       scriptFiles: ['query-builder.js', 'validator.js'],
       referenceFiles: ['postgresql-docs.md', 'mysql-reference.md'],
+      frontmatterValidation: { isValid: true, hasStructure: true, missingFields: [] },
     },
   },
 };
@@ -358,7 +361,6 @@ export const InvalidSkill: Story = {
   args: {
     content: invalidSkillContent,
     theme: defaultTheme,
-    onError: fn(),
   },
 };
 
@@ -369,7 +371,6 @@ export const MalformedYAML: Story = {
   args: {
     content: malformedYamlContent,
     theme: defaultTheme,
-    onError: fn(),
   },
 };
 
@@ -382,7 +383,6 @@ export const InvalidWithFallback: Story = {
     theme: defaultTheme,
     showRawOnError: true,
     onParsed: fn(),
-    onError: fn(),
   },
   parameters: {
     docs: {
@@ -447,7 +447,6 @@ client = generate_client(
 `,
     theme: defaultTheme,
     onParsed: fn(),
-    onError: fn(),
   },
 };
 
@@ -493,7 +492,6 @@ Transform data between formats.
 `,
     theme: defaultTheme,
     onParsed: fn(),
-    onError: fn(),
   },
 };
 
@@ -504,7 +502,6 @@ export const InvalidNameUppercase: Story = {
   args: {
     content: invalidNameUppercase,
     theme: defaultTheme,
-    onError: fn(),
   },
   parameters: {
     docs: {
@@ -523,7 +520,6 @@ export const InvalidNameConsecutiveHyphens: Story = {
   args: {
     content: invalidNameConsecutiveHyphens,
     theme: defaultTheme,
-    onError: fn(),
   },
   parameters: {
     docs: {
@@ -542,7 +538,6 @@ export const InvalidNameStartsWithHyphen: Story = {
   args: {
     content: invalidNameStartsWithHyphen,
     theme: defaultTheme,
-    onError: fn(),
   },
   parameters: {
     docs: {
@@ -561,7 +556,6 @@ export const InvalidNameEndsWithHyphen: Story = {
   args: {
     content: invalidNameEndsWithHyphen,
     theme: defaultTheme,
-    onError: fn(),
   },
   parameters: {
     docs: {
@@ -580,7 +574,6 @@ export const InvalidNameSpecialChars: Story = {
   args: {
     content: invalidNameSpecialChars,
     theme: defaultTheme,
-    onError: fn(),
   },
   parameters: {
     docs: {
@@ -601,7 +594,6 @@ export const WithContainerWidth: Story = {
     theme: defaultTheme,
     containerWidth: 800,
     onParsed: fn(),
-    onError: fn(),
   },
   parameters: {
     docs: {
@@ -618,9 +610,8 @@ export const WithContainerWidth: Story = {
  */
 const SkillMarkdownWithResizeObserver: React.FC<{
   content: string;
-  onParsed?: (skill: ParsedSkill) => void;
-  onError?: (error: Error) => void;
-}> = ({ content, onParsed, onError }) => {
+  onParsed?: (skill: PartialParsedSkill) => void;
+}> = ({ content, onParsed }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState<number | undefined>(undefined);
 
@@ -677,7 +668,6 @@ const SkillMarkdownWithResizeObserver: React.FC<{
         theme={defaultTheme}
         containerWidth={containerWidth}
         onParsed={onParsed}
-        onError={onError}
       />
     </div>
   );
@@ -693,15 +683,14 @@ export const WithParentResizeObserver: Story = {
         <SkillMarkdownWithResizeObserver
           content={args.content}
           onParsed={args.onParsed}
-          onError={args.onError}
         />
       </div>
     </ThemeProvider>
   ),
   args: {
     content: basicSkillContent,
+    theme: defaultTheme,
     onParsed: fn(),
-    onError: fn(),
   },
   parameters: {
     docs: {
@@ -1127,12 +1116,15 @@ export const LongDocumentWithTableOfContents: Story = {
       id: 'comprehensive-guide',
       name: 'comprehensive-guide',
       path: '/Users/developer/my-project/skills/comprehensive-guide/SKILL.md',
+      skillFolderPath: '/Users/developer/my-project/skills/comprehensive-guide',
       source: 'project-universal' as const,
+      priority: 1 as const,
       content: longDocumentContent,
       hasScripts: false,
       hasReferences: true,
       hasAssets: false,
       referenceFiles: ['examples.md', 'troubleshooting.md'],
+      frontmatterValidation: { isValid: true, hasStructure: true, missingFields: [] },
     },
   },
   parameters: {

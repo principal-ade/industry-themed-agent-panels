@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { AgentDetailPanel } from './AgentDetailPanel';
 import { MockPanelProvider } from '../mocks/panelContext';
-import { useEffect } from 'react';
 import type { Agent } from './agents/hooks/useAgentsData';
 import type { Subagent } from './agents/hooks/useSubagentsData';
 
@@ -118,7 +117,7 @@ export const AgentSelected: Story = {
   render: () => {
     const mockEvents = {
       emit: () => {},
-      on: (eventType: string, handler: any) => {
+      on: (eventType: string, handler: (event: unknown) => void) => {
         if (eventType === 'agent:selected') {
           // Simulate agent selection after mount
           setTimeout(() => {
@@ -136,6 +135,7 @@ export const AgentSelected: Story = {
         }
         return () => {};
       },
+      off: () => {},
     };
 
     return (
@@ -170,7 +170,7 @@ export const SubagentSelected: Story = {
   render: () => {
     const mockEvents = {
       emit: () => {},
-      on: (eventType: string, handler: any) => {
+      on: (eventType: string, handler: (event: unknown) => void) => {
         if (eventType === 'subagent:selected') {
           // Simulate subagent selection after mount
           setTimeout(() => {
@@ -188,6 +188,7 @@ export const SubagentSelected: Story = {
         }
         return () => {};
       },
+      off: () => {},
     };
 
     return (
@@ -235,6 +236,7 @@ export const NoSelection: Story = {
           events={{
             emit: () => {},
             on: () => () => {},
+            off: () => {},
           }}
         />
       )}
@@ -256,6 +258,7 @@ export const Loading: Story = {
           events={{
             emit: () => {},
             on: () => () => {},
+            off: () => {},
           }}
         />
       )}

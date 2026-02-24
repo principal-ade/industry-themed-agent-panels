@@ -157,6 +157,9 @@ export const createMockContext = (overrides?: any): any => {
 
   const merged = { ...defaultContext, ...overrides };
 
+  // Determine which slices to use (overridden or default)
+  const activeSlices = overrides?.slices || mockSlices;
+
   // If slices were overridden, update all slice-related methods to use the new slices
   if (overrides?.slices) {
     const overriddenSlices = overrides.slices;
@@ -191,6 +194,12 @@ export const createMockContext = (overrides?: any): any => {
       return slice.loading;
     };
   }
+
+  // Spread slices as direct properties for typed panel contexts
+  // (e.g., context.fileTree, context.globalSkills, etc.)
+  activeSlices.forEach((slice: DataSlice, name: string) => {
+    merged[name] = slice;
+  });
 
   return merged;
 };
@@ -270,7 +279,8 @@ export const createMockEvents = (): PanelEventEmitter => {
  * Wraps components with mock context and ThemeProvider for Storybook
  */
 export const MockPanelProvider: React.FC<{
-  children: React.ReactNode | ((props: PanelComponentProps) => React.ReactNode);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  children: React.ReactNode | ((props: PanelComponentProps<any, any>) => React.ReactNode);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   contextOverrides?: any;
   actionsOverrides?: Partial<PanelActions>;

@@ -33,9 +33,10 @@ export interface GlobalSubagentsSlice {
 }
 
 /**
- * Empty actions interface - agent panels don't use any actions
+ * Actions type for agent panels - currently uses base PanelActions
+ * Can be extended with custom actions in the future
  */
-export interface AgentPanelActions extends PanelActions {}
+export type AgentPanelActions = PanelActions;
 
 /**
  * Context for panels that need fileTree and globalSkills

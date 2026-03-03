@@ -115,37 +115,6 @@ export const createMockContext = (overrides?: any): any => {
         path: '/Users/developer/my-project',
       },
     },
-    slices: mockSlices,
-    getSlice: <T,>(name: string): DataSlice<T> | undefined => {
-      return mockSlices.get(name) as DataSlice<T> | undefined;
-    },
-    getWorkspaceSlice: <T,>(name: string): DataSlice<T> | undefined => {
-      const slice = mockSlices.get(name);
-      return slice?.scope === 'workspace'
-        ? (slice as DataSlice<T>)
-        : undefined;
-    },
-    getRepositorySlice: <T,>(name: string): DataSlice<T> | undefined => {
-      const slice = mockSlices.get(name);
-      return slice?.scope === 'repository'
-        ? (slice as DataSlice<T>)
-        : undefined;
-    },
-    hasSlice: (name: string, scope?: 'workspace' | 'repository'): boolean => {
-      const slice = mockSlices.get(name);
-      if (!slice) return false;
-      if (!scope) return true;
-      return slice.scope === scope;
-    },
-    isSliceLoading: (
-      name: string,
-      scope?: 'workspace' | 'repository'
-    ): boolean => {
-      const slice = mockSlices.get(name);
-      if (!slice) return false;
-      if (scope && slice.scope !== scope) return false;
-      return slice.loading;
-    },
     refresh: async (
       scope?: 'workspace' | 'repository',
       slice?: string
@@ -157,47 +126,9 @@ export const createMockContext = (overrides?: any): any => {
 
   const merged = { ...defaultContext, ...overrides };
 
-  // Determine which slices to use (overridden or default)
-  const activeSlices = overrides?.slices || mockSlices;
-
-  // If slices were overridden, update all slice-related methods to use the new slices
-  if (overrides?.slices) {
-    const overriddenSlices = overrides.slices;
-    merged.getSlice = <T,>(name: string): DataSlice<T> | undefined => {
-      return overriddenSlices.get(name) as DataSlice<T> | undefined;
-    };
-    merged.getWorkspaceSlice = <T,>(name: string): DataSlice<T> | undefined => {
-      const slice = overriddenSlices.get(name);
-      return slice?.scope === 'workspace'
-        ? (slice as DataSlice<T>)
-        : undefined;
-    };
-    merged.getRepositorySlice = <T,>(name: string): DataSlice<T> | undefined => {
-      const slice = overriddenSlices.get(name);
-      return slice?.scope === 'repository'
-        ? (slice as DataSlice<T>)
-        : undefined;
-    };
-    merged.hasSlice = (name: string, scope?: 'workspace' | 'repository'): boolean => {
-      const slice = overriddenSlices.get(name);
-      if (!slice) return false;
-      if (!scope) return true;
-      return slice.scope === scope;
-    };
-    merged.isSliceLoading = (
-      name: string,
-      scope?: 'workspace' | 'repository'
-    ): boolean => {
-      const slice = overriddenSlices.get(name);
-      if (!slice) return false;
-      if (scope && slice.scope !== scope) return false;
-      return slice.loading;
-    };
-  }
-
   // Spread slices as direct properties for typed panel contexts
   // (e.g., context.fileTree, context.globalSkills, etc.)
-  activeSlices.forEach((slice: DataSlice, name: string) => {
+  mockSlices.forEach((slice: DataSlice, name: string) => {
     merged[name] = slice;
   });
 
@@ -289,19 +220,18 @@ export const MockPanelProvider: React.FC<{
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   mockAdapters?: any;
 }> = ({ children, contextOverrides, actionsOverrides, mockSlices, mockAdapters }) => {
-  // Convert mockSlices from plain object to Map of DataSlices
-  let slicesMap: Map<string, DataSlice> | undefined;
+  // Convert mockSlices from plain object to direct slice properties
+  const sliceOverrides: Record<string, DataSlice> = {};
   if (mockSlices) {
-    slicesMap = new Map();
     Object.entries(mockSlices).forEach(([name, data]) => {
-      slicesMap!.set(name, createMockSlice(name, data));
+      sliceOverrides[name] = createMockSlice(name, data);
     });
   }
 
   // Merge mockSlices and mockAdapters into contextOverrides
   const mergedContextOverrides = {
     ...contextOverrides,
-    ...(slicesMap && { slices: slicesMap }),
+    ...sliceOverrides,
     ...(mockAdapters && { adapters: mockAdapters }),
   };
 

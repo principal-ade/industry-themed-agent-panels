@@ -41,12 +41,49 @@ export const AgenticResourcesPanel: React.FC<PanelComponentProps<AgentPanelActio
   const panelRef = useRef<HTMLDivElement>(null);
   const hasLoadedAgentsRef = useRef(false);
   const hasLoadedSkillsRef = useRef(false);
-  const [mode, setMode] = useState<PanelMode>('agents');
+
+  // Check if fileTree contains any agent-related files (for determining initial mode)
+  const fileTreeHasAgentFiles = useMemo(() => {
+    const fileTree = context.fileTree?.data;
+    const allFiles = fileTree?.allFiles;
+    if (!allFiles || !Array.isArray(allFiles)) return false;
+    return allFiles.some(
+      (f: { name: string; relativePath: string }) =>
+        f.name?.toUpperCase() === 'AGENTS.MD' ||
+        f.relativePath?.startsWith('.claude/agents/')
+    );
+  }, [context.fileTree?.data]);
+
+  // Check if there are global agents/subagents
+  const hasGlobalAgents = useMemo(() => {
+    const globalAgents = context.globalAgents?.data?.agents;
+    const globalSubagents = context.globalSubagents?.data?.subagents;
+    return (globalAgents && globalAgents.length > 0) || (globalSubagents && globalSubagents.length > 0);
+  }, [context.globalAgents?.data?.agents, context.globalSubagents?.data?.subagents]);
+
+  // Determine initial mode: if no agent files exist anywhere, start in skills mode
+  const initialMode = useMemo((): PanelMode => {
+    if (!fileTreeHasAgentFiles && !hasGlobalAgents) {
+      return 'skills';
+    }
+    return 'agents';
+  }, [fileTreeHasAgentFiles, hasGlobalAgents]);
+
+  const [mode, setMode] = useState<PanelMode>(initialMode);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [agentFilter, setAgentFilter] = useState<AgentFilter>('documentation');
   const [skillFilter, setSkillFilter] = useState<SkillFilter>('project');
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Sync mode with initialMode when it changes (e.g., fileTree loads)
+  const prevInitialModeRef = useRef(initialMode);
+  useEffect(() => {
+    if (prevInitialModeRef.current !== initialMode && initialMode === 'skills') {
+      setMode('skills');
+    }
+    prevInitialModeRef.current = initialMode;
+  }, [initialMode]);
 
   // Load agents and subagents data
   const {
@@ -272,6 +309,56 @@ export const AgenticResourcesPanel: React.FC<PanelComponentProps<AgentPanelActio
   const agentsCount = agents.length;
   const subagentsCount = subagents.length;
 
+  // Check if there are any agents at all (for hiding agents mode toggle)
+  // Use both loaded data AND fileTree check for robustness
+  const hasAnyAgents = agents.length > 0 || subagents.length > 0 || fileTreeHasAgentFiles || hasGlobalAgents;
+
+  // Check if there are any project skills (for hiding project filter)
+  const hasProjectSkills = useMemo(() => {
+    return skills.some((skill) => {
+      if (skill.installedLocations && skill.installedLocations.length > 0) {
+        return skill.installedLocations.some(
+          (loc) =>
+            loc.source === 'project-universal' ||
+            loc.source === 'project-claude' ||
+            loc.source === 'project-other'
+        );
+      }
+      return (
+        skill.source === 'project-universal' ||
+        skill.source === 'project-claude' ||
+        skill.source === 'project-other'
+      );
+    });
+  }, [skills]);
+
+  // Auto-switch to skills mode if in agents mode but no agents exist
+  // This handles cases where data loads after initial render
+  useEffect(() => {
+    // Only switch if we have fileTree data (not still loading) and confirmed no agents
+    const fileTreeLoaded = context.fileTree?.data != null;
+    if (mode === 'agents' && fileTreeLoaded && !fileTreeHasAgentFiles && !hasGlobalAgents) {
+      setMode('skills');
+    }
+  }, [mode, context.fileTree?.data, fileTreeHasAgentFiles, hasGlobalAgents]);
+
+  // Auto-switch to global filter if no project skills
+  useEffect(() => {
+    if (skillFilter === 'project' && !hasProjectSkills && !showSkillsLoading) {
+      setSkillFilter('global');
+    }
+  }, [skillFilter, hasProjectSkills, showSkillsLoading]);
+
+  // Auto-switch agent filter to available type when one is empty
+  useEffect(() => {
+    if (showAgentsLoading) return;
+    if (agentFilter === 'documentation' && agentsCount === 0 && subagentsCount > 0) {
+      setAgentFilter('subagents');
+    } else if (agentFilter === 'subagents' && subagentsCount === 0 && agentsCount > 0) {
+      setAgentFilter('documentation');
+    }
+  }, [agentFilter, agentsCount, subagentsCount, showAgentsLoading]);
+
   return (
     <div
       ref={panelRef}
@@ -300,52 +387,73 @@ export const AgenticResourcesPanel: React.FC<PanelComponentProps<AgentPanelActio
           gap: '12px',
         }}
       >
-        {/* Mode Toggle */}
-        <div style={{ display: 'flex', gap: '4px', background: theme.colors.backgroundSecondary, padding: '4px', borderRadius: theme.radii[2], border: `1px solid ${theme.colors.border}` }}>
-          <button
-            onClick={() => handleModeChange('agents')}
-            style={{
-              padding: '6px 14px',
-              fontSize: theme.fontSizes[1],
-              fontFamily: theme.fonts.body,
-              border: 'none',
-              borderRadius: theme.radii[1],
-              background: mode === 'agents' ? theme.colors.background : 'transparent',
-              color: mode === 'agents' ? theme.colors.text : theme.colors.textSecondary,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              fontWeight: mode === 'agents' ? 600 : 400,
-              transition: 'all 0.2s ease',
-              boxShadow: mode === 'agents' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-            }}
-          >
-            <Bot size={14} />
-            Agents
-          </button>
-          <button
-            onClick={() => handleModeChange('skills')}
-            style={{
-              padding: '6px 14px',
-              fontSize: theme.fontSizes[1],
-              fontFamily: theme.fonts.body,
-              border: 'none',
-              borderRadius: theme.radii[1],
-              background: mode === 'skills' ? theme.colors.background : 'transparent',
-              color: mode === 'skills' ? theme.colors.text : theme.colors.textSecondary,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              fontWeight: mode === 'skills' ? 600 : 400,
-              transition: 'all 0.2s ease',
-              boxShadow: mode === 'skills' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-            }}
-          >
-            <Wrench size={14} />
-            Skills
-          </button>
+        {/* Mode Toggle - only show toggle if there are agents */}
+        <div style={{ display: 'flex', gap: '4px', background: hasAnyAgents ? theme.colors.backgroundSecondary : 'transparent', padding: hasAnyAgents ? '4px' : 0, borderRadius: theme.radii[2], border: hasAnyAgents ? `1px solid ${theme.colors.border}` : 'none' }}>
+          {hasAnyAgents && (
+            <button
+              onClick={() => handleModeChange('agents')}
+              style={{
+                padding: '6px 14px',
+                fontSize: theme.fontSizes[1],
+                fontFamily: theme.fonts.body,
+                border: 'none',
+                borderRadius: theme.radii[1],
+                background: mode === 'agents' ? theme.colors.background : 'transparent',
+                color: mode === 'agents' ? theme.colors.text : theme.colors.textSecondary,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontWeight: mode === 'agents' ? 600 : 400,
+                transition: 'all 0.2s ease',
+                boxShadow: mode === 'agents' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+              }}
+            >
+              <Bot size={14} />
+              Agents
+            </button>
+          )}
+          {hasAnyAgents ? (
+            <button
+              onClick={() => handleModeChange('skills')}
+              style={{
+                padding: '6px 14px',
+                fontSize: theme.fontSizes[1],
+                fontFamily: theme.fonts.body,
+                border: 'none',
+                borderRadius: theme.radii[1],
+                background: mode === 'skills' ? theme.colors.background : 'transparent',
+                color: mode === 'skills' ? theme.colors.text : theme.colors.textSecondary,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontWeight: mode === 'skills' ? 600 : 400,
+                transition: 'all 0.2s ease',
+                boxShadow: mode === 'skills' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+              }}
+            >
+              <Wrench size={14} />
+              Skills
+            </button>
+          ) : (
+            /* When no agents, just show Skills as a title */
+            <div
+              style={{
+                padding: '6px 14px',
+                fontSize: theme.fontSizes[1],
+                fontFamily: theme.fonts.body,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontWeight: 600,
+                color: theme.colors.text,
+              }}
+            >
+              <Wrench size={14} />
+              {hasProjectSkills ? 'Skills' : 'Global Skills'}
+            </div>
+          )}
         </div>
 
         {/* Refresh button */}
@@ -440,62 +548,65 @@ export const AgenticResourcesPanel: React.FC<PanelComponentProps<AgentPanelActio
 
       {/* Filter Toggle */}
       {mode === 'agents' ? (
-        <div
-          style={{
-            flexShrink: 0,
-            display: 'flex',
-            gap: '8px',
-          }}
-        >
-          <button
-            onClick={() => setAgentFilter('documentation')}
+        /* Only show filter toggle if both agent types exist */
+        agentsCount > 0 && subagentsCount > 0 ? (
+          <div
             style={{
-              flex: 1,
-              padding: '8px 16px',
-              fontSize: theme.fontSizes[1],
-              fontFamily: theme.fonts.body,
-              border: `1px solid ${agentFilter === 'documentation' ? theme.colors.primary : theme.colors.border}`,
-              borderRadius: theme.radii[1],
-              background: agentFilter === 'documentation' ? `${theme.colors.primary}15` : theme.colors.backgroundSecondary,
-              color: agentFilter === 'documentation' ? theme.colors.primary : theme.colors.text,
-              cursor: 'pointer',
+              flexShrink: 0,
               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px',
-              fontWeight: agentFilter === 'documentation' ? 600 : 400,
-              transition: 'all 0.2s ease',
+              gap: '8px',
             }}
           >
-            <BookOpen size={14} />
-            Main Agent ({agentsCount})
-          </button>
-          <button
-            onClick={() => setAgentFilter('subagents')}
-            style={{
-              flex: 1,
-              padding: '8px 16px',
-              fontSize: theme.fontSizes[1],
-              fontFamily: theme.fonts.body,
-              border: `1px solid ${agentFilter === 'subagents' ? theme.colors.primary : theme.colors.border}`,
-              borderRadius: theme.radii[1],
-              background: agentFilter === 'subagents' ? `${theme.colors.primary}15` : theme.colors.backgroundSecondary,
-              color: agentFilter === 'subagents' ? theme.colors.primary : theme.colors.text,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px',
-              fontWeight: agentFilter === 'subagents' ? 600 : 400,
-              transition: 'all 0.2s ease',
-            }}
-          >
-            <Bot size={14} />
-            Subagents ({subagentsCount})
-          </button>
-        </div>
+            <button
+              onClick={() => setAgentFilter('documentation')}
+              style={{
+                flex: 1,
+                padding: '8px 16px',
+                fontSize: theme.fontSizes[1],
+                fontFamily: theme.fonts.body,
+                border: `1px solid ${agentFilter === 'documentation' ? theme.colors.primary : theme.colors.border}`,
+                borderRadius: theme.radii[1],
+                background: agentFilter === 'documentation' ? `${theme.colors.primary}15` : theme.colors.backgroundSecondary,
+                color: agentFilter === 'documentation' ? theme.colors.primary : theme.colors.text,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                fontWeight: agentFilter === 'documentation' ? 600 : 400,
+                transition: 'all 0.2s ease',
+              }}
+            >
+              <BookOpen size={14} />
+              Main Agent ({agentsCount})
+            </button>
+            <button
+              onClick={() => setAgentFilter('subagents')}
+              style={{
+                flex: 1,
+                padding: '8px 16px',
+                fontSize: theme.fontSizes[1],
+                fontFamily: theme.fonts.body,
+                border: `1px solid ${agentFilter === 'subagents' ? theme.colors.primary : theme.colors.border}`,
+                borderRadius: theme.radii[1],
+                background: agentFilter === 'subagents' ? `${theme.colors.primary}15` : theme.colors.backgroundSecondary,
+                color: agentFilter === 'subagents' ? theme.colors.primary : theme.colors.text,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                fontWeight: agentFilter === 'subagents' ? 600 : 400,
+                transition: 'all 0.2s ease',
+              }}
+            >
+              <Bot size={14} />
+              Subagents ({subagentsCount})
+            </button>
+          </div>
+        ) : null
       ) : (
-        hasRepository && (
+        hasRepository && hasProjectSkills && (
           <div
             style={{
               flexShrink: 0,

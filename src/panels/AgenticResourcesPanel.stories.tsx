@@ -322,6 +322,11 @@ export const Empty: Story = {
           sha: 'mock-sha',
         },
       }}
+      mockAdapters={{
+        fileSystem: {
+          readFile: async () => '',
+        },
+      }}
     >
       {({ context, actions }) => (
         <AgenticResourcesPanel
@@ -549,6 +554,229 @@ export const MultipleSubagents: Story = {
             }
             const subagent = manySubagents.find(s => path.includes(s.name));
             return subagent?.content || '';
+          },
+        },
+      }}
+    >
+      {({ context, actions }) => (
+        <AgenticResourcesPanel
+          context={context}
+          actions={actions}
+          events={{
+            emit: () => {},
+            on: () => () => {},
+            off: () => {},
+          }}
+        />
+      )}
+    </MockPanelProvider>
+  ),
+};
+
+// Helper to create a full Skill object for global skills
+const createGlobalSkill = (
+  id: string,
+  name: string,
+  path: string,
+  description: string,
+  capabilities: string[],
+  source: 'global-claude' | 'global-universal'
+) => ({
+  id,
+  name,
+  path,
+  description,
+  capabilities,
+  source,
+  content: createSkillContent(name, description, capabilities),
+  skillFolderPath: path.replace('/SKILL.md', ''),
+  hasScripts: false,
+  hasReferences: false,
+  hasAssets: false,
+  priority: source === 'global-universal' ? 2 : 4,
+  frontmatterValidation: { isValid: true, hasStructure: true, missingFields: [] },
+});
+
+/**
+ * No agents exist - only global skills available.
+ * The Agents toggle should be hidden, showing only "Skills" as a title.
+ * The Project/Global filter should also be hidden since there are no project skills.
+ */
+export const GlobalSkillsOnly: Story = {
+  render: () => (
+    <MockPanelProvider
+      mockSlices={{
+        fileTree: {
+          allFiles: [] as any,
+          sha: 'mock-sha',
+        },
+        globalSkills: {
+          skills: [
+            createGlobalSkill(
+              'global-commit',
+              'commit',
+              '~/.claude/skills/commit/SKILL.md',
+              'Generate conventional commit messages',
+              ['Git integration', 'Conventional commits'],
+              'global-claude'
+            ),
+            createGlobalSkill(
+              'global-review',
+              'review',
+              '~/.agent/skills/review/SKILL.md',
+              'Review pull requests and provide feedback',
+              ['Code review', 'PR comments'],
+              'global-universal'
+            ),
+          ],
+        },
+      }}
+      mockAdapters={{
+        fileSystem: {
+          readFile: async () => '',
+        },
+      }}
+    >
+      {({ context, actions }) => (
+        <AgenticResourcesPanel
+          context={context}
+          actions={actions}
+          events={{
+            emit: () => {},
+            on: () => () => {},
+            off: () => {},
+          }}
+        />
+      )}
+    </MockPanelProvider>
+  ),
+};
+
+/**
+ * Only subagents exist (no main AGENTS.md files).
+ * The agent filter toggle should be hidden since only one type exists.
+ * Should auto-switch to subagents filter.
+ */
+export const SubagentsOnly: Story = {
+  render: () => (
+    <MockPanelProvider
+      mockSlices={{
+        fileTree: {
+          allFiles: [
+            { name: 'code-reviewer.md', relativePath: '.claude/agents/code-reviewer.md', type: 'file' },
+            { name: 'test-writer.md', relativePath: '.claude/agents/test-writer.md', type: 'file' },
+          ] as any,
+          sha: 'mock-sha',
+        },
+      }}
+      mockAdapters={{
+        fileSystem: {
+          readFile: async (path: string) => {
+            if (path.includes('code-reviewer.md')) {
+              return mockSubagents[0].content;
+            }
+            if (path.includes('test-writer.md')) {
+              return mockSubagents[1].content;
+            }
+            return '';
+          },
+        },
+      }}
+    >
+      {({ context, actions }) => (
+        <AgenticResourcesPanel
+          context={context}
+          actions={actions}
+          events={{
+            emit: () => {},
+            on: () => () => {},
+            off: () => {},
+          }}
+        />
+      )}
+    </MockPanelProvider>
+  ),
+};
+
+/**
+ * Only main agents exist (no subagents).
+ * The agent filter toggle should be hidden since only one type exists.
+ * Should auto-switch to documentation filter.
+ */
+export const MainAgentsOnly: Story = {
+  render: () => (
+    <MockPanelProvider
+      mockSlices={{
+        fileTree: {
+          allFiles: [
+            { name: 'AGENTS.md', relativePath: 'AGENTS.md', type: 'file' },
+            { name: 'AGENTS.md', relativePath: 'packages/web/AGENTS.md', type: 'file' },
+          ] as any,
+          sha: 'mock-sha',
+        },
+      }}
+      mockAdapters={{
+        fileSystem: {
+          readFile: async (path: string) => {
+            const agent = mockAgents.find(a => path.endsWith(a.path));
+            return agent?.content || '';
+          },
+        },
+      }}
+    >
+      {({ context, actions }) => (
+        <AgenticResourcesPanel
+          context={context}
+          actions={actions}
+          events={{
+            emit: () => {},
+            on: () => () => {},
+            off: () => {},
+          }}
+        />
+      )}
+    </MockPanelProvider>
+  ),
+};
+
+/**
+ * Both project and global skills exist.
+ * The Project/Global filter should be visible.
+ */
+export const MixedSkills: Story = {
+  render: () => (
+    <MockPanelProvider
+      mockSlices={{
+        fileTree: {
+          allFiles: [
+            { name: 'SKILL.md', relativePath: '.agent/skills/legal-review/SKILL.md', type: 'file' },
+          ] as any,
+          sha: 'mock-sha',
+        },
+        globalSkills: {
+          skills: [
+            createGlobalSkill(
+              'global-commit',
+              'commit',
+              '~/.claude/skills/commit/SKILL.md',
+              'Generate conventional commit messages',
+              ['Git integration', 'Conventional commits'],
+              'global-claude'
+            ),
+          ],
+        },
+      }}
+      mockAdapters={{
+        fileSystem: {
+          readFile: async (path: string) => {
+            if (path.includes('legal-review/SKILL.md')) {
+              return createSkillContent(
+                'Legal Review',
+                'Review legal documents and contracts for compliance',
+                ['Contract analysis', 'Compliance checking', 'Risk assessment']
+              );
+            }
+            return '';
           },
         },
       }}

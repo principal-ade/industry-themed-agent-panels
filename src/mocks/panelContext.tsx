@@ -128,8 +128,11 @@ export const createMockContext = (overrides?: any): any => {
 
   // Spread slices as direct properties for typed panel contexts
   // (e.g., context.fileTree, context.globalSkills, etc.)
+  // Only set default slices if not already provided by overrides
   mockSlices.forEach((slice: DataSlice, name: string) => {
-    merged[name] = slice;
+    if (!(name in merged)) {
+      merged[name] = slice;
+    }
   });
 
   return merged;

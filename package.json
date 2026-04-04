@@ -1,6 +1,6 @@
 {
   "name": "@industry-theme/agent-panels",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "A collection of panel extensions for displaying and managing agent-related resources (Skills, AGENTS.md, and Subagents)",
   "type": "module",
   "main": "dist/panels.bundle.js",

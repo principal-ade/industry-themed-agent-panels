@@ -426,98 +426,50 @@ const SkillMetadataSection: React.FC<{
                 )}
               </div>
 
-              {/* Action Buttons */}
+              {/* Edit Button */}
               {!hideEditButtons && events && skill?.path && (
-                <div style={{
-                  display: 'flex',
-                  gap: theme.space[2],
-                }}>
-                  <button
-                    onClick={() => {
-                      if (skill?.path) {
-                        events.emit({
-                          type: 'file:open',
-                          source: 'skill-detail',
-                          timestamp: Date.now(),
-                          payload: {
-                            filePath: skill.path,
-                            gitStatus: 'untracked',
-                          },
-                        });
-                      }
-                    }}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: theme.space[1],
-                      padding: `${theme.space[1]} ${theme.space[2]}`,
-                      backgroundColor: theme.colors.backgroundSecondary,
-                      border: `1px solid ${theme.colors.border}`,
-                      borderRadius: '6px',
-                      color: theme.colors.text,
-                      fontSize: theme.fontSizes[1],
-                      fontFamily: theme.fonts.body,
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = theme.colors.primary;
-                      e.currentTarget.style.color = theme.colors.background;
-                      e.currentTarget.style.borderColor = theme.colors.primary;
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = theme.colors.backgroundSecondary;
-                      e.currentTarget.style.color = theme.colors.text;
-                      e.currentTarget.style.borderColor = theme.colors.border;
-                    }}
-                    title="Open in file editor"
-                  >
-                    <FileEdit size={14} />
-                    <span>Edit</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (skill?.path) {
-                        events.emit({
-                          type: 'file:openInMdxEditor',
-                          source: 'skill-detail',
-                          timestamp: Date.now(),
-                          payload: {
-                            filePath: skill.path,
-                          },
-                        });
-                      }
-                    }}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: theme.space[1],
-                      padding: `${theme.space[1]} ${theme.space[2]}`,
-                      backgroundColor: theme.colors.backgroundSecondary,
-                      border: `1px solid ${theme.colors.border}`,
-                      borderRadius: '6px',
-                      color: theme.colors.text,
-                      fontSize: theme.fontSizes[1],
-                      fontFamily: theme.fonts.body,
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = theme.colors.secondary;
-                      e.currentTarget.style.color = theme.colors.background;
-                      e.currentTarget.style.borderColor = theme.colors.secondary;
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = theme.colors.backgroundSecondary;
-                      e.currentTarget.style.color = theme.colors.text;
-                      e.currentTarget.style.borderColor = theme.colors.border;
-                    }}
-                    title="Open in MDX editor"
-                  >
-                    <ExternalLink size={14} />
-                    <span>MDX Editor</span>
-                  </button>
-                </div>
+                <button
+                  onClick={() => {
+                    if (skill) {
+                      events.emit({
+                        type: 'skill:edit',
+                        source: 'skill-detail',
+                        timestamp: Date.now(),
+                        payload: {
+                          skill: skill,
+                        },
+                      });
+                    }
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: theme.space[1],
+                    padding: `${theme.space[1]} ${theme.space[2]}`,
+                    backgroundColor: theme.colors.backgroundSecondary,
+                    border: `1px solid ${theme.colors.border}`,
+                    borderRadius: '6px',
+                    color: theme.colors.text,
+                    fontSize: theme.fontSizes[1],
+                    fontFamily: theme.fonts.body,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = theme.colors.primary;
+                    e.currentTarget.style.color = theme.colors.background;
+                    e.currentTarget.style.borderColor = theme.colors.primary;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = theme.colors.backgroundSecondary;
+                    e.currentTarget.style.color = theme.colors.text;
+                    e.currentTarget.style.borderColor = theme.colors.border;
+                  }}
+                  title="Edit skill"
+                >
+                  <FileEdit size={14} />
+                  <span>Edit</span>
+                </button>
               )}
             </div>
 

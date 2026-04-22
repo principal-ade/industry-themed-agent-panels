@@ -152,7 +152,7 @@ export const SkillDetailPanel: React.FC<SkillDetailPanelProps> = ({
           textAlign: 'center',
         }}
       >
-        <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⚡</div>
+
         <h2
           style={{
             color: theme.colors.text,
